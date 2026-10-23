@@ -9,7 +9,7 @@ K9 Service website, Telegram Mini App, owner workspace and manual KBZPay receipt
 - Separate `/owner` workspace. Only `OWNER_TELEGRAM_ID` can manage customer orders, services and payments.
 - Custom quotes and fixed MMK service prices, order approval, Processing, delivery and Done.
 - KBZPay receiving account, transaction ID and private receipt upload, with owner verification.
-- Cloudflare D1 orders and audit history; private R2 receipt storage.
+- Cloudflare D1 orders, audit history and private receipt/QR storage. R2 is optional.
 - Telegram direct orders and Rich Message owner alerts through the same order engine.
 
 **KBZPay is a manual transfer and receipt-review flow. It is not an automatic bank gateway.** Uploading a receipt never marks an order Paid. The owner checks the actual incoming transfer in KBZPay and then verifies it here.
@@ -22,29 +22,23 @@ Create a **private** repository named `k9-service` under your own account. Extra
 
 GitHub mobile browser: open the repository, use **Add file → Upload files** (desktop-site mode may help with folder uploads). Alternatively, use Termux Git. The supplied `.gitignore` excludes local secrets and generated files; `.dev.vars.example` contains only empty placeholders.
 
-### 2. Cloudflare resources
+### 2. Connect Cloudflare
 
-In your own Cloudflare account:
+1. In **Workers & Pages**, create a **Worker connected to GitHub**, select `k9-service`, and choose `main` as the production branch.
+2. Use Worker name **`k9-service`**, matching `wrangler.jsonc`.
+3. Keep the build command **`pnpm build`**. Use **`pnpm run deploy`** as the deploy command; Cloudflare's default **`npx wrangler deploy`** also works after the Cloudflare build.
+4. Use Node **22** and repository root **`/`**.
+5. On Cloudflare's Git build (`WORKERS_CI=1`), the build script reuses the named **`k9-service-db`** D1 database or creates it if it does not exist, resolves its ID and applies ordered migrations before building the Worker. An explicit database ID in `wrangler.jsonc` is honored.
 
-1. Create a D1 database named **`k9-service-db`**. Copy its database ID.
-2. Edit `wrangler.jsonc` in GitHub and replace `00000000-0000-4000-8000-000000000000` with that database ID.
-3. Create an R2 bucket named **`k9-service-receipts`**. Keep public bucket access disabled. If Cloudflare requires billing enrollment to enable R2, complete that account step yourself before continuing.
-4. In **Workers & Pages**, create a **Worker connected to GitHub**, select `k9-service`, and choose `main` as the production branch.
-5. Use Worker name **`k9-service`**, matching `wrangler.jsonc`.
+**R2 activation, an R2 subscription and an R2 bucket are not required.** Receipt and QR images use private D1 tables, split into 512 KiB chunks to stay below D1's per-row size limit. Receipt images remain limited to 5 MiB and QR images to 2 MiB. The original protected image endpoints enforce owner/customer access. D1 storage and query quotas apply; this default is intended for modest receipt volume.
 
-Build configuration:
+The Cloudflare build token must have D1 permissions for the account. If setup reports a permission failure, correct the build token's D1 access in Cloudflare and retry. No Cloudflare credentials belong in Git.
 
-| Setting | Value |
-| --- | --- |
-| Root directory | `/` |
-| Build command | `pnpm build` |
-| Deploy command | `pnpm run deploy` |
-| Node version | `22` |
-| Production branch | `main` |
+Configure production deployments for `main` only. Do not enable branch preview deployments against the production database. Use separate resources if staging is added later.
 
-Cloudflare installs dependencies from `pnpm-lock.yaml`. The package manager version is pinned in `package.json`. The deploy command applies ordered D1 migrations, then publishes the generated Worker and assets. It refuses to deploy when the database ID is still the placeholder.
+If a previous deploy failed with **`Please enable R2 ... code 10042`**, pull this version and retry the build. The default Wrangler config no longer declares an R2 binding. Do not retry the older failed commit.
 
-Configure production deployments for `main` only. Do not enable branch preview deployments against the production D1/R2 resources. Use separate resources if staging is added later.
+For a future R2 upgrade, enable it in your account yourself and add a private `BUCKET` binding deliberately. The storage adapter then writes new images to R2 and can still read existing D1 images. This does not move old images automatically.
 
 ### 3. Runtime configuration
 
@@ -95,7 +89,7 @@ pnpm build
 pnpm test:api
 ```
 
-The API integration test uses local, isolated D1/R2 and fake Telegram identities signed with a test-only token. Telegram network calls are intercepted. It checks forged-header rejection, disabled public owner activation, session identity, customer isolation, protected receipts, server prices, payment verification, stale updates and Processing/Done.
+The API integration test uses local, isolated D1 (and optional R2) and fake Telegram identities signed with a test-only token. Telegram network calls are intercepted. It checks forged-header rejection, disabled public owner activation, session identity, customer isolation, protected receipts, server prices, payment verification, stale updates, multi-chunk receipt round-trips and Processing/Done.
 
 GitHub Actions runs these checks on pushes to `main` and pull requests. It has read-only repository permission and no deployment secrets. Cloudflare handles deployment through its own GitHub connection.
 
@@ -109,4 +103,4 @@ GitHub Actions runs these checks on pushes to `main` and pull requests. It has r
 - `db/`, `drizzle/`: D1 schema and ordered SQL migrations.
 - `worker/index.ts`, `vite.config.ts`, `wrangler.jsonc`: standalone Cloudflare runtime and build.
 
-Keep the source private unless you deliberately choose to publish it. Keep R2 private regardless of source visibility.
+Keep the source private unless you deliberately choose to publish it. Receipt images are served through protected APIs, never public storage URLs.

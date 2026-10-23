@@ -15,6 +15,13 @@
       "when": 1792733642193,
       "tag": "0001_organic_killmonger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792751676319,
+      "tag": "0002_public_talkback",
+      "breakpoints": true
     }
   ]
 }

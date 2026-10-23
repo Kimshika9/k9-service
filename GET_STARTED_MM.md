@@ -15,15 +15,18 @@
 
 ## Cloudflare ချိတ်မယ်
 
-- D1 database: **k9-service-db**
-- Private R2 bucket: **k9-service-receipts**
-- `wrangler.jsonc` ထဲက sample database ID ကို ကိုကို့ D1 ID နဲ့အစားထိုးပါ။
 - Workers & Pages မှာ GitHub repo ကိုချိတ်ပြီး Worker name **k9-service** ရွေးပါ။
 - Build command: **pnpm build**
-- Deploy command: **pnpm run deploy**
+- Deploy command: **pnpm run deploy** (Cloudflare default `npx wrangler deploy` ကိုလည်း သုံးနိုင်ပါတယ်။)
 - Node version: **22**
 - Production branch: **main**
 
-Bot Token၊ Owner Telegram ID၊ KBZPay လက်ခံအကောင့်နဲ့ website URL ကို Cloudflare ရဲ့ Variables and Secrets မှာထည့်ရမယ်။ တကယ့် token/password တွေ GitHub ထဲမတင်ပါနဲ့။ အသေးစိတ် fields နဲ့ ပထမဆုံး Mini App ချိတ်နည်းကို `README.md` မှာ အဆင့်လိုက်ရေးထားပါတယ်။
+Cloudflare Git build မှာ **k9-service-db** ရှိပြီးသားဆို ပြန်သုံးပြီး မရှိသေးရင် ဆောက်ပေးမယ်။ Database ID နဲ့ migration တွေကိုလည်း အလိုအလျောက် ချိတ်ပေးမယ်။
 
-ဒီ package ကို ပြင်ဆင်ပြီးဖြစ်ပေမယ့် ကိုကို့ Cloudflare account ပေါ် deploy လုပ်ပြီးသား မဟုတ်သေးပါဘူး။
+**R2 ဖွင့်စရာမလိုတော့ပါဘူး။** Receipt နဲ့ QR ပုံတွေကို D1 database ထဲမှာ private သိမ်းမယ်။ Receipt တင်တာနဲ့ Paid မဖြစ်ပါဘူး။ Owner က ငွေဝင်တာစစ်ပြီးမှ အတည်ပြုရမယ်။
+
+အရင် deploy က `Please enable R2 ... code 10042` နဲ့ fail ဖြစ်ခဲ့ရင် GitHub latest commit ကိုရွေးပြီး build အသစ်ပြန်လုပ်ပါ။ အရင် failed commit ကိုပြန်စမ်းတာနဲ့ fix အသစ်မပါလာနိုင်ပါဘူး။
+
+Bot Token၊ Owner Telegram ID၊ KBZPay လက်ခံအကောင့်နဲ့ website URL ကို Cloudflare ရဲ့ Variables and Secrets မှာထည့်ရမယ်။ တကယ့် token/password တွေ GitHub ထဲမတင်ပါနဲ့။ အသေးစိတ် fields နဲ့ ပထမဆုံး Mini App ချိတ်နည်းကို `README.md` မှာ ရေးထားပါတယ်။
+
+ဒီ source ကို ပြင်ဆင်ပြီးဖြစ်ပေမယ့် ကိုကို့ Cloudflare account ပေါ် deployment အောင်မြင်ကြောင်း မစစ်ရသေးပါဘူး။

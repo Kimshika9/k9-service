@@ -7,9 +7,9 @@
   },
   "scripts": {
     "dev": "vinext dev",
-    "build": "vinext build",
+    "build": "node scripts/build-cloudflare.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "node scripts/test-telegram-auth.mjs && node --experimental-strip-types scripts/test-order-policy.mjs",
+    "test": "node scripts/test-telegram-auth.mjs && node --experimental-strip-types scripts/test-order-policy.mjs && node scripts/test-cloudflare-setup.mjs",
     "test:api": "node scripts/test-order-api.mjs",
     "db:migrate": "wrangler d1 migrations apply DB --remote --config wrangler.jsonc",
     "deploy": "node scripts/deploy-cloudflare.mjs",

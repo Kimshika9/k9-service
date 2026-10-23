@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index, uniqueIndex, blob, primaryKey } from 'drizzle-orm/sqlite-core';
 export const settings = sqliteTable('settings', { key: text('key').primaryKey(), value: text('value').notNull() });
 export const services = sqliteTable('services', { id: text('id').primaryKey(), data: text('data').notNull(), updatedAt: text('updated_at').notNull() });
 export const orders = sqliteTable('orders', {
@@ -13,3 +13,11 @@ export const payments = sqliteTable('payments', {
 export const orderEvents = sqliteTable('order_events', {
  id:text('id').primaryKey(),orderId:text('order_id').notNull().references(()=>orders.id),actorId:text('actor_id').notNull(),actorRole:text('actor_role').notNull(),event:text('event').notNull(),fromStatus:text('from_status').notNull(),toStatus:text('to_status').notNull(),reason:text('reason').notNull().default(''),metadata:text('metadata').notNull().default('{}'),createdAt:text('created_at').notNull(),
 },(t)=>[index('events_order_idx').on(t.orderId)]);
+
+// Small private receipt/QR objects can use D1 when R2 is not enabled.
+export const receiptImages = sqliteTable('receipt_images', {
+ key:text('key').primaryKey(),contentType:text('content_type').notNull(),size:integer('size').notNull(),createdAt:text('created_at').notNull(),
+});
+export const receiptChunks = sqliteTable('receipt_chunks', {
+ imageKey:text('image_key').notNull().references(()=>receiptImages.key,{onDelete:'cascade'}),position:integer('position').notNull(),data:blob('data',{mode:'buffer'}).notNull(),
+},t=>[primaryKey({columns:[t.imageKey,t.position]})]);
