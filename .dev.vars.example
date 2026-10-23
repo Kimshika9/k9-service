@@ -1,0 +1,9 @@
+# Local development only. Put production secrets in Cloudflare Settings > Variables and Secrets.
+BOT_TOKEN=
+BOT_USERNAME=
+OWNER_TELEGRAM_ID=
+TELEGRAM_WEBHOOK_SECRET=
+SITE_URL=
+KBZPAY_ENABLED=0
+KBZPAY_ACCOUNT_NAME=
+KBZPAY_PHONE=

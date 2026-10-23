@@ -1,0 +1,4 @@
+import {customer,readBody,ApiError,error,json} from '../../../../../lib/server';
+import {getOrder,commitOrder,presentOrder} from '../../../../../lib/order-engine';
+import {canCustomerCancel} from '../../../../../lib/order-policy';
+export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){try{const a=await customer(request),b=await readBody(request),o=await getOrder((await params).id);if(o.customerKey!==a.key)throw new ApiError(404,'Order not found.');if(Number(b.version)!==o.version)throw new ApiError(409,'Refresh this order before trying again.');let status='';if(b.action==='cancel'&&canCustomerCancel(o))status='Cancelled';if(b.action==='confirm'&&o.status==='Delivered')status='Done';if(!status)throw new ApiError(400,'This action is not available.');const next=await commitOrder(o,a,b.action,{status});return json({order:presentOrder(next)});}catch(e){return error(e);}}

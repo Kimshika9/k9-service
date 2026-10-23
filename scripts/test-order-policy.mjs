@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {assertOwnerAction,canCustomerCancel,normalizeTransaction,validateAmount} from '../lib/order-policy.ts';
+const unpaid={status:'Pending Approval',paymentStatus:'Proof Submitted',amount:15000};
+for(const action of ['approve','process','deliver','done'])assert.throws(()=>assertOwnerAction(action,unpaid));
+assert.doesNotThrow(()=>assertOwnerAction('approve',{...unpaid,paymentStatus:'Paid'}));
+assert.doesNotThrow(()=>assertOwnerAction('process',{status:'Approved',paymentStatus:'Paid',amount:15000}));
+assert.doesNotThrow(()=>assertOwnerAction('done',{status:'Processing',paymentStatus:'Paid',amount:15000}));
+assert.throws(()=>assertOwnerAction('done',{status:'Done',paymentStatus:'Paid',amount:15000}));
+assert.throws(()=>assertOwnerAction('quote',{status:'Pending Payment',paymentStatus:'Proof Submitted',amount:15000}));
+assert.throws(()=>assertOwnerAction('hold',{status:'Processing',paymentStatus:'Paid',amount:15000},''));
+assert.equal(canCustomerCancel({status:'Pending Payment',paymentStatus:'Unpaid'}),true);
+assert.equal(canCustomerCancel({status:'Pending Approval',paymentStatus:'Proof Submitted'}),false);
+assert.equal(canCustomerCancel({status:'Processing',paymentStatus:'Paid'}),false);
+assert.equal(normalizeTransaction(' abcd 1234 '),'ABCD1234');assert.throws(()=>normalizeTransaction('<invalid>'));assert.throws(()=>validateAmount(100.5));assert.throws(()=>validateAmount(0));assert.equal(validateAmount('15000'),15000);
+console.log('Order policy: unpaid fulfillment blocked, lifecycle enforced, close/requote/reason guards and amount/transaction validation passed.');
