@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {getLaunchData,ownerLaunchPath} from '../lib/telegram-launch.ts';
+const now=1800000000,raw=new URLSearchParams({auth_date:String(now),user:JSON.stringify({id:90001}),hash:'test-only-not-a-server-signature'}).toString();
+let saved='';const w={location:{hash:'#'+new URLSearchParams({tgWebAppData:raw})},sessionStorage:{getItem:()=>saved,setItem:(_k,v)=>saved=v,removeItem:()=>saved=''}};
+assert.equal(getLaunchData(w,now),raw);assert.equal(saved,raw);
+w.location.hash='#connections';assert.equal(getLaunchData(w,now+30),raw);
+assert.equal(getLaunchData(w,now+3601),'');assert.equal(saved,'');
+w.Telegram={WebApp:{initData:raw}};assert.equal(getLaunchData(w,now),raw);
+w.Telegram.WebApp.initData=new URLSearchParams({auth_date:String(now-4000)}).toString();assert.equal(getLaunchData(w,now),'');
+const blocked={location:{hash:'#'+new URLSearchParams({tgWebAppData:raw})},sessionStorage:{getItem:()=>{throw Error('blocked')},setItem:()=>{throw Error('blocked')},removeItem:()=>{throw Error('blocked')}}};assert.equal(getLaunchData(blocked,now),raw);assert.equal(new URLSearchParams(ownerLaunchPath(blocked,now).split('#')[1]).get('tgWebAppData'),raw);
+assert.equal(getLaunchData(undefined,now),'');
+console.log('Telegram launch: hash input, owner-route continuity, SDK input, expiry and blocked storage checks passed.');

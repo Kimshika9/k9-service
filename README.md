@@ -47,7 +47,7 @@ Set these under **Worker → Settings → Variables and Secrets**. Store them as
 | Name | What to enter |
 | --- | --- |
 | `BOT_TOKEN` | Your Telegram bot token from BotFather |
-| `BOT_USERNAME` | Bot username without `@` |
+| `BOT_USERNAME` | Optional username without `@`; the server resolves it with `getMe` when omitted |
 | `OWNER_TELEGRAM_ID` | Your numeric Telegram user ID; never a username |
 | `TELEGRAM_WEBHOOK_SECRET` | A random 32+ character value using letters, digits, `_` or `-` |
 | `SITE_URL` | The exact HTTPS Worker URL returned by Cloudflare, without a trailing slash |
@@ -61,6 +61,8 @@ No public first-user owner activation exists. Set the correct `OWNER_TELEGRAM_ID
 
 ### 4. Telegram connection
 
+For a phone-first setup, download `bot.py` and follow **[BOT_SETUP_MM.md](BOT_SETUP_MM.md)**. Python 3.10+ is enough; no pip packages are required. It writes private local configuration, verifies the website settings and registers the webhook. Cloudflare credentials are never requested by the script. Add the runtime secrets above in Cloudflare once.
+
 1. In BotFather, select the bot and configure its **Menu Button** to open the exact `SITE_URL`. This first menu setup lets you enter the Mini App before registering its webhook.
 2. Open the bot in Telegram with your owner account. Press the menu button to open K9 Service.
 3. The signed Telegram identity automatically opens `/owner` for the configured owner.
@@ -69,7 +71,7 @@ No public first-user owner activation exists. Set the correct `OWNER_TELEGRAM_ID
 6. In **KBZPay settings**, verify the receiving details and upload your genuine account QR if desired. No QR is fabricated.
 7. Test from a different Telegram customer account: create order → owner quote → customer uploads test proof → owner verifies → Processing → Done. Do not send real money during testing.
 
-Outside Telegram, anyone can view the catalog. Ordering and owner controls require opening the Mini App in Telegram. `Open in Telegram` sends visitors to the bot; use its menu button to enter. Verified Telegram data is retained in a Secure, HttpOnly cookie for route navigation and is reverified on every authenticated request. Sessions expire within one hour; reopen the Mini App when asked.
+Outside Telegram, anyone can view the catalog. Ordering and owner controls require opening the Mini App in Telegram. `Open in Telegram` sends visitors to the bot; use its menu button to enter. Verified Telegram data is retained in a Secure, HttpOnly cookie for route navigation. The Mini App also carries its original signed launch data through same-origin owner navigation using session storage, covering webviews that block cookies. The server revalidates the Telegram HMAC on every authenticated request; client-cached identity never grants permissions. Sessions expire within one hour; reopen the Mini App when asked.
 
 ## Local development and validation
 
@@ -104,3 +106,9 @@ GitHub Actions runs these checks on pushes to `main` and pull requests. It has r
 - `worker/index.ts`, `vite.config.ts`, `wrangler.jsonc`: standalone Cloudflare runtime and build.
 
 Keep the source private unless you deliberately choose to publish it. Receipt images are served through protected APIs, never public storage URLs.
+
+## Bot connector modes
+
+`python bot.py` configures Cloudflare webhook mode and exits when connected; the phone can then be switched off. `--setup` writes device-local settings only, `--check` validates those settings without network access, and `--status` checks both the backend connection and Telegram webhook. `--poll` is an explicit optional polling bridge that removes the webhook and forwards Telegram updates to the same authenticated backend. Use only one polling process. `--connect` restores webhook mode.
+
+The public `/api/connection/status` endpoint exposes connection readiness and public bot identity, never tokens or the owner ID. Its POST check requires the shared webhook secret and verifies that bot.py and Cloudflare agree on bot ID, owner ID and site URL.

@@ -55,3 +55,11 @@ yarn-error.log*
 *.tar.gz
 /receipts/
 /uploads/
+
+# Local Python bot configuration and polling state
+.k9-service-config.json*
+.k9-service-offset
+.k9-service.lock
+CLOUDFLARE-SECRETS.txt*
+__pycache__/
+*.pyc

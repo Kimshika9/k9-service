@@ -1,2 +1,9 @@
-import {runtime,json} from '../../../../lib/server';
-export async function GET(){const username=runtime().BOT_USERNAME;if(!username||!/^\w{5,32}$/.test(username))return json({error:'The Telegram bot has not been configured yet. Set BOT_USERNAME in Cloudflare.'},503);return new Response(null,{status:302,headers:{Location:`https://t.me/${username}?start=app`,'Cache-Control':'no-store'}})}
+import {actor,runtime} from '../../../../lib/server';
+import {botUsername,esc} from '../../../../lib/telegram';
+export async function GET(request:Request){
+ try{const a=await actor(request);if(a)return Response.redirect(new URL(a.isOwner?'/owner':'/',request.url),303);}catch{}
+ let username:string|null=null;try{username=await botUsername()}catch{}
+ if(username)return new Response(null,{status:302,headers:{Location:`https://t.me/${username}?start=app`,'Cache-Control':'no-store'}});
+ const message=runtime().BOT_TOKEN?'We could not reach the configured Telegram bot. Please check the connection and try again.':'The website needs its Telegram bot connection. Configure BOT_TOKEN and OWNER_TELEGRAM_ID in Cloudflare, then reopen the Mini App.';
+ return new Response(`<!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1"><title>K9 Service · Bot connection</title><style>body{margin:0;background:#08070c;color:#eee;font:16px/1.7 system-ui;display:grid;min-height:100vh;place-items:center}main{max-width:480px;margin:24px;padding:32px;border:1px solid #383042;border-radius:24px;background:#121018}small{color:#b49bff}h1{line-height:1.2}a{display:inline-block;padding:12px 20px;background:#9273ef;color:white;border-radius:12px;text-decoration:none}</style><main><small>K9 SERVICE / BOT CONNECTION</small><h1>Let’s connect your bot.</h1><p>${esc(message)}</p><p>Run the supplied bot.py to prepare your connection settings. No public owner activation is available.</p><a href="/owner">Back to owner workspace</a></main></html>`,{status:503,headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'self' https://web.telegram.org"}});
+}
