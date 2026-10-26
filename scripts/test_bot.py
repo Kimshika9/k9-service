@@ -1,8 +1,11 @@
 import importlib.util
+import io
+import json
 from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
+from urllib.error import HTTPError, URLError
 
 spec=importlib.util.spec_from_file_location('k9bot',Path(__file__).resolve().parents[1]/'bot.py')
 bot=importlib.util.module_from_spec(spec);spec.loader.exec_module(bot)
@@ -36,4 +39,25 @@ class BotTests(unittest.TestCase):
   methods=[m for m,_ in calls];self.assertIn('setWebhook',methods);self.assertNotIn('deleteWebhook',methods);self.assertNotIn('getUpdates',methods)
   owner_menu=[p for m,p in calls if m=='setChatMenuButton' and p.get('chat_id')][0]
   self.assertEqual(owner_menu['menu_button']['web_app']['url'],'https://example.test/owner')
+ def test_http_403_diagnostics(self):
+  cases=[('https://api.telegram.org/bot'+CONFIG['BOT_TOKEN']+'/getMe',b'<html>Forbidden</html>',{},'Telegram getMe: HTTP 403.'),
+   (CONFIG['SITE_URL']+'/api/connection/status',b'<html>Cloudflare blocked</html>',{'cf-ray':'abcd-XYZ'},'K9 website API: HTTP 403.')]
+  for url,body,headers,expected in cases:
+   with self.subTest(expected=expected),patch.object(bot,'urlopen',side_effect=HTTPError(url,403,'Forbidden',headers,io.BytesIO(body))):
+    with self.assertRaises(bot.ConnectionError) as caught:bot.request_json(url)
+    message=str(caught.exception);self.assertIn(expected,message);self.assertNotIn(CONFIG['BOT_TOKEN'],message);self.assertNotIn('<html>',message)
+    self.assertEqual(caught.exception.code,403)
+    if headers:self.assertIn('Cloudflare Ray ID: abcd-XYZ',message)
+ def test_json_errors_and_network_failures(self):
+  url=CONFIG['SITE_URL']+'/api/connection/status'
+  secret=CONFIG['TELEGRAM_WEBHOOK_SECRET']
+  body=json.dumps({'error':'Denied '+secret+' '+CONFIG['BOT_TOKEN'],'parameters':{'retry_after':'bad'}}).encode()
+  with patch.object(bot,'urlopen',side_effect=HTTPError(url,401,'Unauthorized',{},io.BytesIO(body))):
+   with self.assertRaises(bot.ConnectionError) as caught:bot.request_json(url,{}, {'x-k9-connection-secret':secret})
+   message=str(caught.exception);self.assertIn('HTTP 401',message);self.assertNotIn(secret,message);self.assertNotIn(CONFIG['BOT_TOKEN'],message)
+  with patch.object(bot,'urlopen',side_effect=URLError('private URL '+CONFIG['BOT_TOKEN'])):
+   with self.assertRaisesRegex(bot.ConnectionError,'K9 website API: no usable network response'):bot.request_json(url)
+  for body in [b'[]',b'null',b'not JSON']:
+   error=bot.http_failure(url,403,body,{})
+   self.assertEqual(error.code,403)
 if __name__=='__main__':unittest.main()

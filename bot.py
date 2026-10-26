@@ -30,6 +30,7 @@ CONFIG_FILE = ROOT / '.k9-service-config.json'
 SECRETS_FILE = ROOT / 'CLOUDFLARE-SECRETS.txt'
 OFFSET_FILE = ROOT / '.k9-service-offset'
 FIELDS = ('BOT_TOKEN', 'BOT_USERNAME', 'OWNER_TELEGRAM_ID', 'TELEGRAM_WEBHOOK_SECRET', 'SITE_URL')
+VERSION = '1.1'
 COMMANDS = [
     {'command': 'start', 'description': 'Open K9 Service'},
     {'command': 'services', 'description': 'Browse available services'},
@@ -95,9 +96,61 @@ def private_write(path: Path, data: str) -> None:
         pass
 
 
+def request_label(url: str) -> str:
+    """Describe the step without exposing Telegram's token-bearing URL."""
+    parsed = urlsplit(url)
+    if parsed.hostname == 'api.telegram.org':
+        method = parsed.path.rsplit('/', 1)[-1]
+        return 'Telegram ' + (method if re.fullmatch(r'[A-Za-z]+', method) else 'API')
+    return 'K9 website API'
+
+
+def safe_message(value, url: str, headers=None) -> str:
+    message = str(value)
+    for secret in [url, *(headers or {}).values()]:
+        if secret:
+            message = message.replace(str(secret), '[redacted]')
+    message = re.sub(r'\d{5,}:[A-Za-z0-9_-]{20,}', '[bot token redacted]', message)
+    return ' '.join(message.split())[:500]
+
+
+def http_failure(url: str, status: int, body: bytes, response_headers, request_headers=None) -> ConnectionError:
+    label = request_label(url)
+    try:
+        details = json.loads(body)
+        if not isinstance(details, dict):
+            details = {}
+    except (ValueError, UnicodeError):
+        details = {}
+    description = details.get('description') or details.get('error')
+    message = f'{label}: HTTP {status}.'
+    if description:
+        message += ' ' + safe_message(description, url, request_headers)
+    elif status == 403:
+        message += ' The server refused this request; this does not mean your internet is slow.'
+    if status == 403 and label.startswith('Telegram'):
+        message += ' Telegram/API access was denied. This is not a Cloudflare settings check.'
+    elif status == 403:
+        cloudflare = response_headers.get('cf-ray') or b'cloudflare' in body.lower()
+        if cloudflare:
+            message += ' Cloudflare is in the response path. Check the matching Security event and any Access policy; this alone does not prove which rule blocked it.'
+        else:
+            message += ' Check that SITE_URL is your deployed public K9 Worker, not a dashboard or private preview URL.'
+    elif status == 401 and not label.startswith('Telegram'):
+        message += ' Check that TELEGRAM_WEBHOOK_SECRET matches Cloudflare.'
+    ray = response_headers.get('cf-ray', '')
+    if re.fullmatch(r'[A-Za-z0-9-]{1,100}', ray):
+        message += ' Cloudflare Ray ID: ' + ray + '.'
+    try:
+        retry_after = int((details.get('parameters') or {}).get('retry_after', 0))
+    except (ValueError, TypeError, AttributeError):
+        retry_after = 0
+    return ConnectionError(message, status, retry_after)
+
+
 def request_json(url: str, payload=None, headers=None, timeout=35):
     data = None if payload is None else json.dumps(payload).encode('utf-8')
-    h = {'Accept': 'application/json', **(headers or {})}
+    h = {'Accept': 'application/json', 'User-Agent': 'K9-Service-Connector/' + VERSION, **(headers or {})}
     if data is not None:
         h['Content-Type'] = 'application/json'
     req = Request(url, data=data, headers=h, method='GET' if data is None else 'POST')
@@ -105,17 +158,16 @@ def request_json(url: str, payload=None, headers=None, timeout=35):
         with urlopen(req, timeout=timeout) as response:
             return json.load(response)
     except HTTPError as error:
+        # Inspect a bounded body, but never print raw HTML or token-bearing URLs.
         try:
-            details = json.loads(error.read())
-        except (ValueError, OSError):
-            details = {}
-        # Never print request URLs: Telegram URLs contain the bot token.
-        message = details.get('description') or details.get('error') or f'HTTP {error.code}. Check connection settings.'
-        raise ConnectionError(str(message), error.code, int(details.get('parameters', {}).get('retry_after', 0))) from None
+            body = error.read(65536)
+        except OSError:
+            body = b''
+        raise http_failure(url, error.code, body, error.headers or {}, headers) from None
     except (URLError, TimeoutError, OSError):
-        raise ConnectionError('Network request failed. Check internet access and the HTTPS website URL.') from None
+        raise ConnectionError(request_label(url) + ': no usable network response (connection, DNS or TLS failure).') from None
     except ValueError:
-        raise ConnectionError('The server returned a non-JSON response. Check that the latest K9 Worker is deployed.') from None
+        raise ConnectionError(request_label(url) + ': expected JSON but received another response. Check SITE_URL, the latest Worker deployment and any login/Access page.') from None
 
 
 def telegram(c: dict, method: str, payload=None, timeout=35):
@@ -138,6 +190,7 @@ def setup(saved: dict) -> dict:
             c[k] = value
     c['TELEGRAM_WEBHOOK_SECRET'] = c.get('TELEGRAM_WEBHOOK_SECRET') or secrets.token_urlsafe(32)
     c = validate(c)
+    print('Checking Telegram bot identity (getMe)...', flush=True)
     me = telegram(c, 'getMe')
     c['BOT_USERNAME'] = me['username']
     private_write(CONFIG_FILE, json.dumps(c, indent=2) + '\n')
@@ -153,6 +206,7 @@ def setup(saved: dict) -> dict:
 
 
 def website_check(c: dict, me: dict) -> dict:
+    print('Checking K9 website public status...', flush=True)
     health = request_json(c['SITE_URL'] + '/api/connection/status')
     if health.get('service') != 'k9-service':
         raise ConnectionError('This URL is not the updated K9 Service backend.')
@@ -163,6 +217,7 @@ def website_check(c: dict, me: dict) -> dict:
         raise ConnectionError('Cloudflare BOT_TOKEN is invalid or Telegram is unreachable. Use the same token as this script.')
     if (health.get('bot') or {}).get('id') != me['id']:
         raise ConnectionError('This website and bot.py use different bot tokens. Set the same BOT_TOKEN in both.')
+    print('Verifying K9 website connection settings...', flush=True)
     result = request_json(c['SITE_URL'] + '/api/connection/status', {'ownerId': c['OWNER_TELEGRAM_ID'], 'botId': me['id'], 'siteUrl': c['SITE_URL']}, {'x-k9-connection-secret': c['TELEGRAM_WEBHOOK_SECRET']})
     if not result.get('ok'):
         raise ConnectionError('Website connection verification failed.')
@@ -179,6 +234,7 @@ def configure_menu(c: dict):
 
 
 def connect(c: dict):
+    print('Checking Telegram bot identity (getMe)...', flush=True)
     me = telegram(c, 'getMe')
     website_check(c, me)
     configure_menu(c)
@@ -228,6 +284,7 @@ def main(argv=None):
     for flag in ('setup', 'check', 'status', 'connect', 'poll'):
         modes.add_argument('--' + flag, action='store_true')
     args = parser.parse_args(argv)
+    print('K9 Service connector v' + VERSION)
     try:
         saved = load_config()
         if args.setup or (not saved and not args.check and not args.status):

@@ -55,6 +55,11 @@ python bot.py --connect
 
 ## Error ဖြစ်ရင်
 
+- **HTTP 403** က internet နှေးတယ်လို့ မဆိုလိုပါဘူး။ Server က request ကို လက်မခံတာဖြစ်တယ်။ Connector v1.1 က ဘယ်အဆင့်မှာပိတ်တာလဲဆိုတာပါ ပြပေးမယ်။
+  - **Telegram getMe: HTTP 403** → Telegram API ဆီ request ကို ငြင်းထားတာ။ Cloudflare Secret ပြင်ရမယ်လို့ ဒီ error တစ်ခုတည်းနဲ့ မသတ်မှတ်နိုင်ပါဘူး။
+  - **K9 website API: HTTP 403** → website ဘက်မှာပိတ်တာ။ `SITE_URL` က deployed public Worker URL ဖြစ်ရမယ်၊ Cloudflare dashboard link/private preview link မဟုတ်ရ။ Cloudflare Ray ID ပါရင် အဲဒီ ID နဲ့ Security event၊ Access policy ကိုစစ်ပါ။ Authentication ကိုကျော်ရန် script ကကြိုးစားမည်မဟုတ်ပါ။
+  - Error တက်ရင် version၊ နောက်ဆုံး Checking/Verifying စာကြောင်းနဲ့ error ကိုပေးပါ။ **Token၊ private settings ဖိုင် မပို့ပါနဲ့။**
+- **HTTP 401 … connection secret** → `TELEGRAM_WEBHOOK_SECRET` ကို bot.py နဲ့ Cloudflare နှစ်နေရာမှာ တူအောင်ထားပါ။
 - **Cloudflare settings are missing…** → private text file ထဲက အဲဒီ keys တွေ Cloudflare Secret မှာထည့်ပါ။
 - **different bot tokens** → website နဲ့ bot.py မှာ တူညီတဲ့ bot token သုံးပါ။
 - **OWNER_TELEGRAM_ID differs…** → နှစ်နေရာလုံးမှာ ကိုကို့ numeric ID ကို တူအောင်ထားပါ။
