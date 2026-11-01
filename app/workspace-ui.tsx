@@ -2,13 +2,14 @@
 import {useEffect,useState,useRef,useCallback,type ReactNode} from 'react';
 import {X,CheckCircle2,Loader2,AlertCircle} from 'lucide-react';
 import {money,normalizeStatus} from '../lib/catalog';
+import {readApiResponse} from '../lib/api-client';
 import {getLaunchData,loadTelegramSDK} from '../lib/telegram-launch';
 export type Api=(path:string,options?:RequestInit)=>Promise<Record<string,any>>;
 export function useK9Api(_ownerMode=false){
  const init=useRef('');const [authVersion,setAuthVersion]=useState(0),[authReady,setAuthReady]=useState(false);
  useEffect(()=>{let active=true;function setup(){const raw=getLaunchData(),changed=init.current!==raw;init.current=raw;const tg=(window as any).Telegram?.WebApp;tg?.ready?.();tg?.expand?.();if(active){if(changed)setAuthVersion(v=>v+1);setAuthReady(true)}}init.current=getLaunchData();if(init.current){setup()}loadTelegramSDK().then(setup);return()=>{active=false}},[]);
- const headers=useCallback(():Record<string,string>=>{const raw=getLaunchData()||init.current;return raw?{'x-telegram-init-data':raw}:{}},[]);
- const api=useCallback(async(path:string,options:RequestInit={})=>{const h=new Headers(options.headers);if(!(options.body instanceof FormData)&&!h.has('Content-Type'))h.set('Content-Type','application/json');for(const [key,value]of Object.entries(headers()))h.set(key,value);const res=await fetch(path,{...options,headers:h});const d=await res.json() as Record<string,any>;if(!res.ok)throw new Error(d.error||'Please try again.');return d;},[headers]);return {api,authVersion,authReady,authHeaders:headers};}
+ const headers=useCallback(():Record<string,string>=>{const raw=getLaunchData();return raw?{'x-telegram-init-data':raw}:{}},[]);
+ const api=useCallback(async(path:string,options:RequestInit={})=>{const h=new Headers(options.headers);if(!(options.body instanceof FormData)&&!h.has('Content-Type'))h.set('Content-Type','application/json');for(const [key,value]of Object.entries(headers()))h.set(key,value);const res=await fetch(path,{...options,headers:h});return readApiResponse(res);},[headers]);return {api,authVersion,authReady,authHeaders:headers};}
 
 export function ActionButton({children,onClick,secondary=false,danger=false,type='button',disabled=false,className=''}:{children:ReactNode;onClick?:()=>void;secondary?:boolean;danger?:boolean;type?:'button'|'submit';disabled?:boolean;className?:string}){return <button type={type} onClick={onClick} disabled={disabled} className={`${secondary?'button-secondary':'button-primary'} ${danger?'danger-button':''} ${className}`}>{children}</button>}
 export function Modal({children,title,onClose,wide=false}:{children:ReactNode;title:string;onClose:()=>void;wide?:boolean}){const ref=useRef<HTMLDialogElement>(null);useEffect(()=>{ref.current?.showModal();const prev=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.body.style.overflow=prev}},[]);return <dialog ref={ref} className={'modal '+(wide?'wide-modal':'')} aria-label={title} onCancel={onClose} onClick={e=>{if(e.target===ref.current)onClose()}}><div className="modal-inner"><div className="modal-top"><span className="small-label">K9 SERVICE · {title}</span><button className="icon-button" onClick={onClose} aria-label="Close dialog"><X size={19}/></button></div>{children}</div></dialog>}

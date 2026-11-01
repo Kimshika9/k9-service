@@ -21,12 +21,26 @@ class BotTests(unittest.TestCase):
  def test_website_verification(self):
   me={'id':123456,'username':'k9_test_bot'}
   health={'service':'k9-service','missing':[],'tokenValid':True,'bot':me}
-  with patch.object(bot,'request_json',side_effect=[health,{'ok':True}]) as request:
-   bot.website_check(CONFIG,me);self.assertEqual(request.call_args.args[2]['x-k9-connection-secret'],CONFIG['TELEGRAM_WEBHOOK_SECRET'])
+  with patch.object(bot,'request_json',side_effect=[health,{'ok':True},{'service':'k9-service','ready':True}]) as request:
+   bot.website_check(CONFIG,me);self.assertEqual(request.call_args_list[1].args[2]['x-k9-connection-secret'],CONFIG['TELEGRAM_WEBHOOK_SECRET'])
   with patch.object(bot,'request_json',return_value={**health,'missing':['BOT_TOKEN']}):
    with self.assertRaisesRegex(bot.ConnectionError,'BOT_TOKEN'):bot.website_check(CONFIG,me)
   with patch.object(bot,'request_json',return_value={**health,'bot':{'id':99}}):
    with self.assertRaisesRegex(bot.ConnectionError,'different bot tokens'):bot.website_check(CONFIG,me)
+ def test_readiness_and_wrong_webhook(self):
+  me={'id':123456,'username':'k9_test_bot'}
+  health={'service':'k9-service','missing':[],'tokenValid':True,'bot':me}
+  with patch.object(bot,'request_json',side_effect=[health,{'ok':True},{'ready':False}]):
+   with self.assertRaisesRegex(bot.ConnectionError,'Worker is not ready'):bot.website_check(CONFIG,me)
+  with patch.object(bot,'load_config',return_value=CONFIG),patch.object(bot,'website_check',return_value=health),patch.object(bot,'telegram',side_effect=[me,{'url':'https://other.test/webhook'}]),patch('sys.stdout',new_callable=io.StringIO) as output:
+   self.assertEqual(bot.main(['--status']),2)
+   self.assertIn('different webhook',output.getvalue())
+   self.assertNotIn(CONFIG['BOT_TOKEN'],output.getvalue())
+ def test_database_readiness_diagnostic(self):
+  body=json.dumps({'service':'k9-service','ready':False,'checks':{'database':False,'botToken':True}}).encode()
+  error=bot.http_failure(CONFIG['SITE_URL']+'/api/health',503,body,{})
+  self.assertIn('Worker readiness failed: database',str(error))
+  self.assertNotIn(CONFIG['BOT_TOKEN'],str(error))
  def test_webhook_mode(self):
   calls=[]
   def telegram(c,method,payload=None,**_):
