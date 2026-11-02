@@ -2,7 +2,9 @@
 
 K9 Service website, Telegram Mini App, owner workspace and manual KBZPay receipt review. This repository deploys directly to **your own Cloudflare Workers account**. It does not require ChatGPT Sites authentication.
 
-## What works
+## Implemented features
+
+Production status and verification limits are recorded in [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md). Passing local tests does not certify a live Cloudflare deployment.
 
 - Public service catalog, mobile layout and K9 void branding.
 - Telegram-verified customer identity; customers can only access their own orders.
@@ -112,3 +114,13 @@ Keep the source private unless you deliberately choose to publish it. Receipt im
 `python bot.py` configures Cloudflare webhook mode and exits when connected; the phone can then be switched off. `--setup` writes device-local settings only, `--check` validates those settings without network access, and `--status` checks both the backend connection and Telegram webhook. `--poll` is an explicit optional polling bridge that removes the webhook and forwards Telegram updates to the same authenticated backend. Use only one polling process. `--connect` restores webhook mode.
 
 The public `/api/connection/status` endpoint exposes connection readiness and public bot identity, never tokens or the owner ID. Its POST check requires the shared webhook secret and verifies that bot.py and Cloudflare agree on bot ID, owner ID and site URL.
+
+## Production diagnostics
+
+- `GET /api/health` returns HTTP 200 only when configuration formats and all runtime D1 tables/columns are ready. It returns HTTP 503 otherwise, with boolean checks only. It performs no migrations and does not read customer records. It does **not** verify the token with Telegram or prove webhook delivery.
+- `GET /api/connection/status` verifies the bot identity through Telegram (briefly cached). Use it alongside `/api/health`.
+- Owner dashboard → **Bot connection → Check webhook** reads Telegram's actual webhook registration, checks its URL against `SITE_URL`, and reports pending updates and whether Telegram recorded a delivery error. This endpoint (`GET /api/telegram/status`) requires the signed owner identity.
+- **Connect bot** verifies that Telegram retained the expected webhook URL. Registration and delivery are separate checks: send `/start` from Telegram and confirm the response before claiming the live connection works.
+- `python bot.py --status` checks the Worker configuration/schema and rejects a webhook pointing to another site. Update the Worker and connector together; connector v1.2 requires `/api/health`.
+
+If the Mini App receives an HTML 403 page, it now displays the HTTP status and a bounded Cloudflare Ray ID when present. Check the matching Cloudflare Security event and any Access policy. A 403 alone does not establish its cause. GitHub Pages is static hosting; its successful deployment does not deploy this Worker's API or D1 database. Use the public HTTPS Worker URL for Telegram, not a GitHub Pages URL or a restricted ChatGPT preview.

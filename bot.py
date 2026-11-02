@@ -30,7 +30,7 @@ CONFIG_FILE = ROOT / '.k9-service-config.json'
 SECRETS_FILE = ROOT / 'CLOUDFLARE-SECRETS.txt'
 OFFSET_FILE = ROOT / '.k9-service-offset'
 FIELDS = ('BOT_TOKEN', 'BOT_USERNAME', 'OWNER_TELEGRAM_ID', 'TELEGRAM_WEBHOOK_SECRET', 'SITE_URL')
-VERSION = '1.1'
+VERSION = '1.2'
 COMMANDS = [
     {'command': 'start', 'description': 'Open K9 Service'},
     {'command': 'services', 'description': 'Browse available services'},
@@ -136,6 +136,11 @@ def http_failure(url: str, status: int, body: bytes, response_headers, request_h
             message += ' Cloudflare is in the response path. Check the matching Security event and any Access policy; this alone does not prove which rule blocked it.'
         else:
             message += ' Check that SITE_URL is your deployed public K9 Worker, not a dashboard or private preview URL.'
+    elif status == 503 and details.get('service') == 'k9-service':
+        checks = details.get('checks')
+        if isinstance(checks, dict):
+            failed = [key for key in ('botToken', 'owner', 'webhookSecret', 'siteUrl', 'database') if checks.get(key) is False]
+            message += ' Worker readiness failed: ' + ', '.join(failed) + '. Check Cloudflare runtime settings and D1 migrations.'
     elif status == 401 and not label.startswith('Telegram'):
         message += ' Check that TELEGRAM_WEBHOOK_SECRET matches Cloudflare.'
     ray = response_headers.get('cf-ray', '')
@@ -221,6 +226,9 @@ def website_check(c: dict, me: dict) -> dict:
     result = request_json(c['SITE_URL'] + '/api/connection/status', {'ownerId': c['OWNER_TELEGRAM_ID'], 'botId': me['id'], 'siteUrl': c['SITE_URL']}, {'x-k9-connection-secret': c['TELEGRAM_WEBHOOK_SECRET']})
     if not result.get('ok'):
         raise ConnectionError('Website connection verification failed.')
+    readiness = request_json(c['SITE_URL'] + '/api/health')
+    if readiness.get('service') != 'k9-service' or readiness.get('ready') is not True:
+        raise ConnectionError('The Worker is not ready. Check runtime configuration, the DB binding and D1 migrations.')
     return health
 
 
@@ -299,10 +307,13 @@ def main(argv=None):
             me = telegram(c, 'getMe')
             website_check(c, me)
             info = telegram(c, 'getWebhookInfo')
+            target = c['SITE_URL'] + '/api/telegram/webhook'
+            if info.get('url') and info['url'] != target:
+                raise ConnectionError('Telegram points to a different webhook. Run --connect to restore this K9 Worker.')
             print(f"Bot: @{me['username']} | Website verified | Mode: {'webhook' if info.get('url') else 'polling/not connected'}")
             print('Pending updates:', info.get('pending_update_count', 0))
             if info.get('last_error_message'):
-                print('Last Telegram webhook error:', info['last_error_message'])
+                print('Telegram recorded a delivery error. Check Cloudflare logs and send /start before checking again.')
         elif args.poll:
             poll(c)
         else:
