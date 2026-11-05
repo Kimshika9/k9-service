@@ -6,6 +6,9 @@ export function wrangler(args,{capture=false}={}){
  return result.stdout||'';
 }
 export function prepareCloudflare({run=wrangler,read=p=>fs.readFileSync(p,'utf8'),write=(p,s)=>fs.writeFileSync(p,s)}={}){
+ if(process.env.WORKERS_CI==='1'&&process.env.WORKERS_CI_BRANCH!=='main'){
+  throw new Error('Only main may prepare the production Cloudflare D1 database.');
+ }
  const config=JSON.parse(read('wrangler.jsonc').replace(/^\s*\/\/.*$/mg,''));
  const db=config.d1_databases?.find(d=>d.binding==='DB');if(!db?.database_name)throw new Error('Configure the DB binding and database_name in wrangler.jsonc.');
  if(!db.database_id||db.database_id==='00000000-0000-4000-8000-000000000000'){

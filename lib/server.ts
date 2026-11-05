@@ -6,7 +6,7 @@ import { settings, services } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { defaultServices, type Service } from './catalog';
 export class ApiError extends Error { constructor(public status:number,message:string){super(message);} }
-export const runtime = () => env as Cloudflare.Env & { BOT_TOKEN?:string; OWNER_TELEGRAM_ID?:string; TELEGRAM_WEBHOOK_SECRET?:string; BOT_USERNAME?:string; SITE_URL?:string; K9_OWNER_SETUP?:string; };
+export const runtime = () => env as Cloudflare.Env & { BOT_TOKEN?:string; OWNER_TELEGRAM_ID?:string; TELEGRAM_WEBHOOK_SECRET?:string; BOT_USERNAME?:string; SITE_URL?:string; K9_OWNER_SETUP?:string; K9_HOSTING_SECRET?:string; };
 export async function actor(request:Request) {
  const header=request.headers.get('x-telegram-init-data');
  const init=header||telegramCookie(request);

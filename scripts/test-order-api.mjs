@@ -6,12 +6,12 @@ import fs from 'node:fs/promises';
 const require=createRequire(import.meta.url);
 const {Miniflare}=require(require.resolve('miniflare',{paths:[path.dirname(require.resolve('wrangler/package.json'))]}));
 const root=path.resolve('dist/server');const modulePaths=(await fs.readdir(root,{recursive:true})).filter(p=>p.endsWith('.js')||p.endsWith('.mjs')).sort((a,b)=>a==='index.js'?-1:b==='index.js'?1:a.localeCompare(b));
-let webhookUrl='',rejectRich=false,statusFailure=false;const telegramCalls=[];const mf=new Miniflare({modules:modulePaths.map(p=>({type:'ESModule',path:path.join(root,p)})),modulesRoot:root,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'order-api-test'},...(process.env.K9_TEST_STORAGE==='r2'?{r2Buckets:{BUCKET:'receipt-test'}}:{}),outboundService:async request=>{const method=new URL(request.url).pathname.split('/').pop(),body=await request.json();telegramCalls.push({method,body});if(method==='getWebhookInfo'&&statusFailure)return new Response('private upstream HTML',{status:403});if(method==='setWebhook')webhookUrl=body.url;if(method==='sendRichMessage'&&rejectRich)return Response.json({ok:false,error_code:400,description:'Rich message rejected'},{status:400});return Response.json({ok:true,result:method==='getMe'?{id:12345,username:'k9_test_bot'}:method==='getWebhookInfo'?{url:webhookUrl,pending_update_count:0}:{message_id:1}});},bindings:{BOT_TOKEN:'12345:local-test-only-not-a-real-token',OWNER_TELEGRAM_ID:'90001',TELEGRAM_WEBHOOK_SECRET:'local-test-secret-for-connection-checks',SITE_URL:'https://example.test',KBZPAY_ENABLED:'1',KBZPAY_ACCOUNT_NAME:'LOCAL TEST ACCOUNT — DO NOT PAY',KBZPAY_PHONE:'09000000000'}});
+let webhookUrl='',rejectRich=false,statusFailure=false;const telegramCalls=[];const mf=new Miniflare({modules:modulePaths.map(p=>({type:'ESModule',path:path.join(root,p)})),modulesRoot:root,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'order-api-test'},...(process.env.K9_TEST_STORAGE==='r2'?{r2Buckets:{BUCKET:'receipt-test'}}:{}),outboundService:async request=>{const method=new URL(request.url).pathname.split('/').pop(),body=await request.json();telegramCalls.push({method,body});if(method==='getWebhookInfo'&&statusFailure)return new Response('private upstream HTML',{status:403});if(method==='setWebhook')webhookUrl=body.url;if(method==='sendRichMessage'&&rejectRich)return Response.json({ok:false,error_code:400,description:'Rich message rejected'},{status:400});return Response.json({ok:true,result:method==='getMe'?{id:12345,username:'k9_test_bot'}:method==='getWebhookInfo'?{url:webhookUrl,pending_update_count:0}:{message_id:1}});},bindings:{BOT_TOKEN:'12345:local-test-only-not-a-real-token',OWNER_TELEGRAM_ID:'90001',TELEGRAM_WEBHOOK_SECRET:'local-test-secret-for-connection-checks',SITE_URL:'https://example.test',K9_HOSTING_SECRET:'local-test-private-hosting-queue-secret',KBZPAY_ENABLED:'1',KBZPAY_ACCOUNT_NAME:'LOCAL TEST ACCOUNT — DO NOT PAY',KBZPAY_PHONE:'09000000000'}});
 try{
  const db=await mf.getD1Database('DB');
  assert.equal((await mf.dispatchFetch('https://localhost/api/health')).status,503,'missing migrations must fail readiness');
  for(const filename of (await fs.readdir('drizzle')).filter(f=>f.endsWith('.sql')).sort()){const sql=await fs.readFile('drizzle/'+filename,'utf8');for(const statement of sql.split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(statement).run();}
- const ready=await mf.dispatchFetch('https://localhost/api/health');assert.equal(ready.status,200);assert.equal((await ready.json()).ready,true);
+ const ready=await mf.dispatchFetch('https://localhost/api/health');assert.equal(ready.status,200);assert.equal((await ready.json()).checks.hostingQueue,true);
  const signed=(id)=>{const p=new URLSearchParams({auth_date:String(Math.floor(Date.now()/1000)),query_id:'qa-'+id,user:JSON.stringify({id,first_name:'QA '+id,username:'qa_'+id})});const data=[...p].sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>`${k}=${v}`).join('\n');const secret=createHmac('sha256','WebAppData').update('12345:local-test-only-not-a-real-token').digest();p.set('hash',createHmac('sha256',secret).update(data).digest('hex'));return p.toString()};
  const identities={owner:{'x-telegram-init-data':signed(90001)},alice:{'x-telegram-init-data':signed(90002)},bob:{'x-telegram-init-data':signed(90003)},forged:{'oai-authenticated-user-id':'owner-test','oai-authenticated-user-email':'owner@example.test'},tampered:{'x-telegram-init-data':signed(90002).replace('90002','90001')}};
  async function call(role,url,method='GET',body){const headers={...(identities[role]||{})};if(body&&!(body instanceof FormData))headers['Content-Type']='application/json';const prepared=new Request('http://localhost'+url,{method,headers,body:body instanceof FormData?body:body?JSON.stringify(body):undefined});const response=await mf.dispatchFetch(prepared.url,{method,headers:Object.fromEntries(prepared.headers),body:method==='GET'?undefined:await prepared.arrayBuffer()});const text=await response.text();let data;try{data=JSON.parse(text)}catch{throw new Error(`${method} ${url}: ${response.status} ${text.slice(0,200)}`)}return {status:response.status,data};}
@@ -58,6 +58,44 @@ try{
  // Telegram direct orders use the same D1 engine, with replay protection.
  const hook=(body,secret='local-test-secret-for-connection-checks')=>mf.dispatchFetch('https://localhost/api/telegram/webhook',{method:'POST',headers:{'Content-Type':'application/json','x-telegram-bot-api-secret-token':secret},body:JSON.stringify(body)});
  const message=(update_id,text)=>({update_id,message:{message_id:update_id,chat:{id:90003,type:'private'},from:{id:90003,first_name:'QA Bob'},text}});
+ const queueSecret='local-test-private-hosting-queue-secret';
+ const queue=async(op,fields={},secret=queueSecret)=>{
+  const response=await mf.dispatchFetch('https://localhost/api/hosting/queue',{method:'POST',headers:{'Content-Type':'application/json','x-k9-hosting-secret':secret},body:JSON.stringify({op,ownerId:'90001',...fields})});
+  return {status:response.status,data:await response.json()};
+ };
+ assert.equal((await queue('check',{},'wrong')).status,401);
+ assert.equal((await queue('check',{ownerId:'90002'})).status,409);
+ assert.equal((await queue('check')).status,200);
+ const ownerMessage=(id,text)=>({update_id:id,message:{...message(id,text).message,chat:{id:90001,type:'private'},from:{id:90001}}});
+ const hostingCallback=(id,owner)=>({update_id:id,callback_query:{id:String(id),from:{id:owner?90001:90003},data:'h:list',message:ownerMessage(id,'').message}});
+ await hook(hostingCallback(980,false));
+ assert.equal((await queue('claim')).data.job,null,'a customer cannot submit a hosting callback');
+ const ownerStart=ownerMessage(981,'/start');
+ await hook(ownerStart);
+ assert.ok(telegramCalls.at(-1).body.reply_markup.inline_keyboard.flat().some(b=>b.callback_data==='h:menu'));
+ const hostingUpdate=hostingCallback(982,true);
+ await hook(hostingUpdate);
+ await hook(hostingUpdate);
+ const upload=ownerMessage(983,'');
+ upload.message.document={file_id:'test-file',file_name:'nested.zip',file_size:120};
+ await hook(upload);
+ const first=(await queue('claim')).data.job;
+ assert.equal(first.id,982);
+ assert.deepEqual(first.payload,{action:'h:list'});
+ assert.equal((await queue('claim')).data.job,null,'another runner cannot overtake a leased job');
+ await queue('ack',{id:first.id,lease:'incorrect'});
+ assert.equal((await queue('claim')).data.job,null,'an invalid lease cannot complete a job');
+ await queue('ack',{id:first.id,lease:first.lease});
+ await hook(hostingUpdate);
+ assert.equal((await queue('claim')).data.job,null,'unprompted upload and replay cannot create jobs');
+ const reply=structuredClone(upload);reply.update_id=984;
+ reply.message.reply_to_message={from:{is_bot:true},text:'K9 Hosting · Reply here with a .py, .js or .zip document (up to 20 MB).'};
+ await hook(reply);
+ const uploadJob=(await queue('claim')).data.job;
+ assert.deepEqual(uploadJob.payload,{file:{id:'test-file',name:'nested.zip',size:120}});
+ await queue('ack',{id:uploadJob.id,lease:uploadJob.lease});
+ assert.equal((await queue('claim')).data.job,null);
+ console.log('Hosting integration: owner-only actions, authenticated queue, private upload replies, lease and replay protection passed.');
  assert.equal((await hook(message(1001,'/start'),'wrong')).status,401);
  assert.equal((await hook(message(1001,'/start'))).status,200);
  const beforeReplay=telegramCalls.length;assert.equal((await hook(message(1001,'/start'))).status,200);assert.equal(telegramCalls.length,beforeReplay);

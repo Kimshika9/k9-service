@@ -63,3 +63,5 @@ yarn-error.log*
 CLOUDFLARE-SECRETS.txt*
 __pycache__/
 *.pyc
+
+/k9-hosting-data/

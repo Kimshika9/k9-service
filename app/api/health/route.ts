@@ -1,5 +1,6 @@
 import {runtime,json} from '../../../lib/server';
 import {configurationChecks} from '../../../lib/readiness';
+import {hostingEnabled} from '../../../lib/hosting';
 // A read-only readiness probe. It never creates tables or calls Telegram.
 export async function GET(){
  const e=runtime(),checks:{[key:string]:boolean}={...configurationChecks(e),database:false};
@@ -18,6 +19,13 @@ export async function GET(){
    e.DB.prepare('SELECT image_key,position,data FROM receipt_chunks LIMIT 0'),
   ]);checks.database=true;
  }catch{ /* Report readiness only; do not expose SQL or customer data. */ }
+ if(e.K9_HOSTING_SECRET!==undefined){
+  checks.hostingQueue=false;
+  if(hostingEnabled(e.K9_HOSTING_SECRET)&&e.K9_HOSTING_SECRET!==e.TELEGRAM_WEBHOOK_SECRET&&e.DB)try{
+   await e.DB.prepare('SELECT id,payload,created_at,lease_until,lease FROM hosting_jobs LIMIT 0').run();
+   checks.hostingQueue=true;
+  }catch{ /* Disabled until the hosting migration is available. */ }
+ }
  const ready=Object.values(checks).every(Boolean);
  return json({service:'k9-service',ready,checks},ready?200:503);
 }

@@ -21,3 +21,11 @@ export const receiptImages = sqliteTable('receipt_images', {
 export const receiptChunks = sqliteTable('receipt_chunks', {
  imageKey:text('image_key').notNull().references(()=>receiptImages.key,{onDelete:'cascade'}),position:integer('position').notNull(),data:blob('data',{mode:'buffer'}).notNull(),
 },t=>[primaryKey({columns:[t.imageKey,t.position]})]);
+
+export const hostingJobs = sqliteTable('hosting_jobs', {
+ id: integer('id').primaryKey(),
+ payload: text('payload'),
+ createdAt: integer('created_at').notNull(),
+ leaseUntil: integer('lease_until').notNull().default(0),
+ lease: text('lease'),
+});

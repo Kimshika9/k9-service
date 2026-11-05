@@ -8,6 +8,7 @@
     "nodejs_compat"
   ],
   "workers_dev": true,
+  "keep_vars": true,
   "preview_urls": false,
   "d1_databases": [
     {
