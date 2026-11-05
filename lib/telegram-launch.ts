@@ -11,6 +11,25 @@ export function getLaunchData(w:LaunchWindow|undefined=typeof window==='undefine
 }
 export function clearLaunchData(){try{sessionStorage.removeItem(storageKey)}catch{}}
 let sdk:Promise<void>|undefined;
-export function loadTelegramSDK(){if(sdk)return sdk;sdk=new Promise<void>(resolve=>{if((window as any).Telegram?.WebApp){resolve();return;}let done=false;const finish=()=>{if(done)return;done=true;clearTimeout(timer);resolve();};const timer=setTimeout(finish,8000);const script=document.createElement('script');script.src='https://telegram.org/js/telegram-web-app.js';script.async=true;script.onload=finish;script.onerror=finish;document.head.appendChild(script);});return sdk;}
+export function loadTelegramSDK(){
+ if(sdk)return sdk;
+ sdk=new Promise<void>(resolve=>{
+  if((window as any).Telegram?.WebApp){resolve();return;}
+  const installed=document.getElementById('telegram-web-app');
+  const script=installed||document.createElement('script');
+  const finish=()=>{clearTimeout(timer);script.removeEventListener('load',finish);script.removeEventListener('error',finish);resolve();};
+  const timer=setTimeout(finish,8000);
+  script.addEventListener('load',finish,{once:true});
+  script.addEventListener('error',finish,{once:true});
+  if(!installed){
+   const element=script as HTMLScriptElement;
+   element.id='telegram-web-app';
+   element.src='https://telegram.org/js/telegram-web-app.js?64';
+   element.async=true;
+   document.head.appendChild(element);
+  }
+ });
+ return sdk;
+}
 
 export function ownerLaunchPath(w:LaunchWindow|undefined=typeof window==='undefined'?undefined:window as unknown as LaunchWindow,now=Date.now()/1000){const raw=getLaunchData(w,now);return '/owner'+(raw?'#tgWebAppData='+encodeURIComponent(raw):'');}

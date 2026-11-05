@@ -10,6 +10,7 @@
   "workers_dev": true,
   "keep_vars": true,
   "preview_urls": false,
+  "vars": { "K9_PUBLIC_ORIGIN": "https://k9-service.kimshikano.workers.dev" },
   "d1_databases": [
     {
       "binding": "DB",

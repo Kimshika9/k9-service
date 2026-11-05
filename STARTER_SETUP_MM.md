@@ -4,7 +4,7 @@ Starter မှာ shared 1 GB RAM၊ 50% CPU၊ 5 GB storage နဲ့ deploymen
 
 ## 1. Cloudflare ကို အရင်ပြင်ပါ
 
-- [VPS_HOSTING_MM.md](VPS_HOSTING_MM.md) ရဲ့ Cloudflare အပိုင်းအတိုင်း `SITE_URL` ပြင်ပါ၊ `K9_HOSTING_SECRET` ထည့်ပါ၊ approved Worker code နဲ့ D1 migration `0003_hosting_jobs.sql` ကို deploy လုပ်ပါ။
+- [VPS_HOSTING_MM.md](VPS_HOSTING_MM.md) ရဲ့ Cloudflare အပိုင်းအတိုင်း `SITE_URL` စစ်ပါ၊ `K9_HOSTING_SECRET` ထည့်ပါ၊ approved Worker code နဲ့ D1 migration `0003_hosting_jobs.sql` ကို deploy လုပ်ပါ။
 - `/api/health` မှာ HTTP 200၊ `ready: true` နဲ့ `hostingQueue: true` စစ်ပါ။
 - ရှိပြီးသား Telegram webhook က ဒီ Worker ရဲ့ `/api/telegram/webhook` ကို ညွှန်းရပါမယ်။ မချိတ်ရသေးရင် Owner Dashboard ရဲ့ **Bot connection → Connect bot** ကနေ ချိတ်ပါ။
 

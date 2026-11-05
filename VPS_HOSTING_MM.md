@@ -5,7 +5,7 @@ Customer orders, Mini App, KBZPay receipts, and the Telegram webhook use the exi
 ## 1. Cloudflare
 
 1. Open **Workers & Pages → k9-service → Settings → Variables and Secrets**.
-2. Set `SITE_URL` to `https://k9-service.kimshikano.workers.dev` (the public base HTTPS URL). Check it matches the VPS setting.
+2. Set `SITE_URL` to `https://k9-service.kimshikano.workers.dev` (the public base HTTPS URL). Check it matches the VPS setting. The checked-in K9 public origin is used if an older SITE_URL is missing or invalid. A valid custom SITE_URL takes precedence.
 3. Generate a distinct value with `python3 -c 'import secrets; print(secrets.token_urlsafe(48))'`. Store it as a Cloudflare **Secret** named `K9_HOSTING_SECRET` and in the VPS env file in step 2. Keep the existing Telegram token, webhook secret, and owner ID.
 4. Deploy the approved GitHub revision from `main`. The project's Cloudflare build/deploy scripts apply `0003_hosting_jobs.sql` to the existing D1 database. If deploying manually, use `pnpm install --frozen-lockfile`, `pnpm build`, and `pnpm deploy` with authenticated Wrangler. Verify the existing D1 database before deploying. Preserve the production Variables and Secrets.
 5. Check `/api/health` for HTTP 200 and `ready: true`. With Hosting enabled, expect `hostingQueue: true` as well.
