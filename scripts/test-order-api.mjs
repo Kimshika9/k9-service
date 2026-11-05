@@ -9,6 +9,16 @@ const root=path.resolve('dist/server');const modulePaths=(await fs.readdir(root,
 let webhookUrl='',rejectRich=false,statusFailure=false;const telegramCalls=[];const mf=new Miniflare({modules:modulePaths.map(p=>({type:'ESModule',path:path.join(root,p)})),modulesRoot:root,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'order-api-test'},...(process.env.K9_TEST_STORAGE==='r2'?{r2Buckets:{BUCKET:'receipt-test'}}:{}),outboundService:async request=>{const method=new URL(request.url).pathname.split('/').pop(),body=await request.json();telegramCalls.push({method,body});if(method==='getWebhookInfo'&&statusFailure)return new Response('private upstream HTML',{status:403});if(method==='setWebhook')webhookUrl=body.url;if(method==='sendRichMessage'&&rejectRich)return Response.json({ok:false,error_code:400,description:'Rich message rejected'},{status:400});return Response.json({ok:true,result:method==='getMe'?{id:12345,username:'k9_test_bot'}:method==='getWebhookInfo'?{url:webhookUrl,pending_update_count:0}:{message_id:1}});},bindings:{BOT_TOKEN:'12345:local-test-only-not-a-real-token',OWNER_TELEGRAM_ID:'90001',TELEGRAM_WEBHOOK_SECRET:'local-test-secret-for-connection-checks',SITE_URL:'https://example.test/owner',K9_PUBLIC_ORIGIN:'https://example.test',K9_HOSTING_SECRET:'local-test-private-hosting-queue-secret',KBZPAY_ENABLED:'1',KBZPAY_ACCOUNT_NAME:'LOCAL TEST ACCOUNT — DO NOT PAY',KBZPAY_PHONE:'09000000000'}});
 try{
  const db=await mf.getD1Database('DB');
+ const orbitPage=await mf.dispatchFetch('https://localhost/orbit');
+ assert.equal(orbitPage.status,200);
+ const orbitHtml=await orbitPage.text();
+ assert.ok(orbitHtml.includes('K9 Orbit'));
+ assert.ok(orbitHtml.includes('Telegram Bot'));
+ assert.ok(orbitHtml.includes('Service list'));
+ const orbitHome=await mf.dispatchFetch('https://localhost/');
+ assert.equal(orbitHome.status,200);
+ assert.doesNotMatch(await orbitHome.text(), /\/scene-[^"\s]+\.js/);
+
  assert.equal((await mf.dispatchFetch('https://localhost/api/health')).status,503,'missing migrations must fail readiness');
  for(const filename of (await fs.readdir('drizzle')).filter(f=>f.endsWith('.sql')).sort()){const sql=await fs.readFile('drizzle/'+filename,'utf8');for(const statement of sql.split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(statement).run();}
  const ready=await mf.dispatchFetch('https://localhost/api/health');assert.equal(ready.status,200);assert.equal((await ready.json()).checks.hostingQueue,true);

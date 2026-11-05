@@ -158,3 +158,13 @@
   font-weight: 700;
 }
 .horizon-dock button:disabled { background: #a5d8ff19; color: var(--horizon-muted); cursor: default; }
+
+.horizon-copy .horizon-orbit-link{position:static;display:inline-flex;gap:10px;width:auto;height:auto;min-height:56px;padding:8px 17px;margin-top:15px;background:var(--orbit-lavender);color:var(--orbit-button-ink);font-weight:700;border-radius:12px}
+
+.horizon-web{--horizon-bg:var(--orbit-void);--horizon-text:var(--orbit-text);--horizon-muted:var(--orbit-muted);--horizon-line:var(--orbit-line);--horizon-sky:var(--orbit-lavender);--horizon-blue:var(--orbit-violet);--horizon-cyan:var(--orbit-lavender)}
+.horizon-web .horizon-graphics{background:radial-gradient(ellipse at 50% 43%,var(--orbit-scene-ink),var(--orbit-void) 68%)}
+.horizon-web .horizon-graphics::after{background:linear-gradient(180deg,var(--orbit-veil) 0%,transparent 28%,transparent 42%,var(--orbit-veil) 80%,var(--orbit-void))}
+.horizon-web .horizon-dock{background:var(--orbit-veil)}
+.horizon-web .horizon-dock button:not(:disabled){color:var(--orbit-button-ink)}
+.horizon-web .horizon-row:has(input:checked),.horizon-web .horizon-row:hover,.horizon-web .horizon-dock button:disabled{background:var(--orbit-ink)}
+.horizon-shell:has(.horizon-web) :is(.site-header,.bottom-nav){background:var(--bg);border-color:var(--border)}
