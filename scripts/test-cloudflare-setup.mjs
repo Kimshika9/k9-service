@@ -6,3 +6,8 @@ for(const mode of ['existing','create','configured']){
  assert.equal(config.d1_databases[0].database_id,'real-id');assert.equal(migrated,true);assert.equal(created,mode==='create');assert.equal(lists,mode==='configured'?0:mode==='create'?2:1);
 }
 console.log('Cloudflare setup: existing D1 reuse, first-time creation, explicit binding and migration ordering passed.');
+
+process.env.WORKERS_CI='1';
+process.env.WORKERS_CI_BRANCH='preview';
+assert.throws(()=>prepareCloudflare({read:()=>assert.fail('preview must not access production D1')}),/Only main/);
+console.log('Cloudflare setup: preview branches cannot prepare production D1.');

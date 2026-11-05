@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readApiResponse} from '../lib/api-client.ts';
-import {configurationChecks} from '../lib/readiness.ts';
+import {configurationChecks,publicOrigin} from '../lib/readiness.ts';
 import {deployCloudflare} from './deploy-cloudflare.mjs';
 const valid={BOT_TOKEN:'12345:local-test-only-not-a-real-token',OWNER_TELEGRAM_ID:'90001',TELEGRAM_WEBHOOK_SECRET:'local-test-secret-for-connection-checks',SITE_URL:'https://example.test'};
 assert.ok(Object.values(configurationChecks(valid)).every(Boolean));
@@ -17,3 +17,7 @@ const calls=[];
 deployCloudflare({exists:()=>true,read:()=>JSON.stringify({main:'index.js'}),prepare:()=>{calls.push('prepare');return {d1_databases:[{binding:'DB',database_id:'configured-id'}]};},write:(_p,s)=>{assert.equal(JSON.parse(s).d1_databases[0].database_id,'configured-id');calls.push('write');},run:args=>{assert.deepEqual(args,['deploy','--config','dist/server/wrangler.json']);calls.push('deploy');}});
 assert.deepEqual(calls,['prepare','write','deploy']);
 console.log('Production checks: HTML 403 diagnostics, configuration validation, safe JSON handling and deployment preflight passed.');
+
+assert.equal(publicOrigin('  https://example.test/  '),'https://example.test');
+assert.equal(publicOrigin('https://example.test/owner'),undefined);
+assert.equal(publicOrigin('https://example.test/?'),undefined);

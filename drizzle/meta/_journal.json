@@ -22,6 +22,13 @@
       "when": 1792751676319,
       "tag": "0002_public_talkback",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1793873959488,
+      "tag": "0003_hosting_jobs",
+      "breakpoints": true
     }
   ]
 }

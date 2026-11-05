@@ -139,7 +139,7 @@ def http_failure(url: str, status: int, body: bytes, response_headers, request_h
     elif status == 503 and details.get('service') == 'k9-service':
         checks = details.get('checks')
         if isinstance(checks, dict):
-            failed = [key for key in ('botToken', 'owner', 'webhookSecret', 'siteUrl', 'database') if checks.get(key) is False]
+            failed = [key for key in ('botToken', 'owner', 'webhookSecret', 'siteUrl', 'database', 'hostingQueue') if checks.get(key) is False]
             message += ' Worker readiness failed: ' + ', '.join(failed) + '. Check Cloudflare runtime settings and D1 migrations.'
     elif status == 401 and not label.startswith('Telegram'):
         message += ' Check that TELEGRAM_WEBHOOK_SECRET matches Cloudflare.'
@@ -155,10 +155,12 @@ def http_failure(url: str, status: int, body: bytes, response_headers, request_h
 
 def request_json(url: str, payload=None, headers=None, timeout=35):
     data = None if payload is None else json.dumps(payload).encode('utf-8')
-    h = {'Accept': 'application/json', 'User-Agent': 'K9-Service-Connector/' + VERSION, **(headers or {})}
+    h = {'Accept': 'application/json', 'User-Agent': 'K9-Service-Connector/' + VERSION}
     if data is not None:
         h['Content-Type'] = 'application/json'
     req = Request(url, data=data, headers=h, method='GET' if data is None else 'POST')
+    for name, value in (headers or {}).items():
+        req.add_unredirected_header(name, value)
     try:
         with urlopen(req, timeout=timeout) as response:
             return json.load(response)

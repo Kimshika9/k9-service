@@ -1,12 +1,18 @@
 import { env } from 'cloudflare:workers';
 import { verifyTelegramInitData } from './telegram-auth';
+import { publicOrigin } from './readiness';
 import { telegramCookie } from './telegram-session';
 import { getDb } from '../db';
 import { settings, services } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { defaultServices, type Service } from './catalog';
 export class ApiError extends Error { constructor(public status:number,message:string){super(message);} }
-export const runtime = () => env as Cloudflare.Env & { BOT_TOKEN?:string; OWNER_TELEGRAM_ID?:string; TELEGRAM_WEBHOOK_SECRET?:string; BOT_USERNAME?:string; SITE_URL?:string; K9_OWNER_SETUP?:string; };
+type RuntimeEnv=Cloudflare.Env & {BOT_TOKEN?:string;OWNER_TELEGRAM_ID?:string;TELEGRAM_WEBHOOK_SECRET?:string;BOT_USERNAME?:string;SITE_URL?:string;K9_PUBLIC_ORIGIN?:string;K9_OWNER_SETUP?:string;K9_HOSTING_SECRET?:string};
+export const runtime=()=>{
+ const bindings=env as RuntimeEnv;
+ const site=publicOrigin(bindings.SITE_URL)||publicOrigin(bindings.K9_PUBLIC_ORIGIN);
+ return site&&site!==bindings.SITE_URL?{...bindings,SITE_URL:site}:bindings;
+};
 export async function actor(request:Request) {
  const header=request.headers.get('x-telegram-init-data');
  const init=header||telegramCookie(request);

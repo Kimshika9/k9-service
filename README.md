@@ -124,3 +124,9 @@ The public `/api/connection/status` endpoint exposes connection readiness and pu
 - `python bot.py --status` checks the Worker configuration/schema and rejects a webhook pointing to another site. Update the Worker and connector together; connector v1.2 requires `/api/health`.
 
 If the Mini App receives an HTML 403 page, it now displays the HTTP status and a bounded Cloudflare Ray ID when present. Check the matching Cloudflare Security event and any Access policy. A 403 alone does not establish its cause. GitHub Pages is static hosting; its successful deployment does not deploy this Worker's API or D1 database. Use the public HTTPS Worker URL for Telegram, not a GitHub Pages URL or a restricted ChatGPT preview.
+
+## K9 Service Center Bot · VPS Hosting
+
+The Owner's **Hosting** menu manages Python and Node bot projects on a Docker VPS. The Service Bot webhook, orders, and Mini App use Cloudflare. See [VPS Hosting setup (MM)](VPS_HOSTING_MM.md) for configuration and live verification.
+
+For the managed Bot-Hosting.net Starter plan, follow [Starter ZIP setup (MM)](STARTER_SETUP_MM.md).
