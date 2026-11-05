@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {loadMiniBotLink,miniBotLink} from '../app/mini-order/telegram.ts';
 import {draftStorage,newest,parseSnapshot,resumeDraft,telegramDraftScope} from '../app/mini-order/draft.ts';
 
 const now=Date.now();
@@ -28,3 +29,19 @@ storage.save(draft,true);
 storage.save(null,true);
 assert.equal((await storage.restore()).draft,null);
 console.log('Mini App draft: resume, scope, expiry, CloudStorage sequencing, and completed draft clearing verified.');
+
+assert.equal(miniBotLink(' @K9_servicebot '),'https://t.me/K9_servicebot');
+assert.equal(miniBotLink('https://example.com/redirect'),undefined);
+const originalFetch=globalThis.fetch;
+try{
+ const controller=new AbortController();
+ globalThis.fetch=async (path,options)=>{
+  assert.equal(path,'/api/connection/status');
+  assert.equal(options.signal,controller.signal);
+  return Response.json({bot:{username:'K9_servicebot'}});
+ };
+ assert.equal(await loadMiniBotLink(controller.signal),'https://t.me/K9_servicebot');
+ globalThis.fetch=async()=>Response.json({bot:null});
+ assert.equal(await loadMiniBotLink(controller.signal),undefined);
+}finally{globalThis.fetch=originalFetch;}
+console.log('Mini App Help: configured and discovered bot links, malformed handles, and missing bot verified.');

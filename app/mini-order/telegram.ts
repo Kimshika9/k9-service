@@ -24,3 +24,16 @@ export function getMiniHost(){
  const app=(window as Window&{Telegram?:{WebApp?:MiniHost}}).Telegram?.WebApp;
  return app?.platform&&app.platform!=='unknown'?app:undefined;
 }
+
+export function miniBotLink(value:unknown){
+ if(typeof value!=='string')return undefined;
+ const username=value.trim().replace(/^@/,'');
+ return /^[A-Za-z0-9_]{5,32}$/.test(username)?'https://t.me/'+username:undefined;
+}
+
+export async function loadMiniBotLink(signal:AbortSignal){
+ const response=await fetch('/api/connection/status',{signal});
+ if(!response.ok)return undefined;
+ const data=await response.json() as {bot?:{username?:unknown}|null}|null;
+ return miniBotLink(data?.bot?.username);
+}
