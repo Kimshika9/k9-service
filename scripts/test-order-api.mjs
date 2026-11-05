@@ -46,6 +46,14 @@ try{
  r=await call('owner','/api/orders','POST',{serviceId:'telegram-bot',requestId:crypto.randomUUID(),details:'Owner cannot create this order'});assert.equal(r.status,403,JSON.stringify(r));
  r=await call('alice','/api/owner/orders');assert.equal(r.status,403,JSON.stringify(r));
  r=await call('', '/api/owner/orders');assert.equal(r.status,401,JSON.stringify(r));
+ const miniOrder={serviceId:'website',requestId:crypto.randomUUID(),details:'A test brief from the Mini App.',deadline:'This month'};
+ const miniFirst=await call('alice','/api/orders','POST',miniOrder);
+ const miniRetry=await call('alice','/api/orders','POST',miniOrder);
+ assert.equal(miniFirst.status,201);
+ assert.equal(miniRetry.status,201);
+ assert.equal(miniFirst.data.order.id,miniRetry.data.order.id);
+ assert.equal(miniFirst.data.order.deadline,'This month');
+ assert.equal(miniFirst.data.order.source,'Mini App');
  const requestId=crypto.randomUUID();r=await call('alice','/api/orders','POST',{serviceId:'telegram-bot',requestId,customer:'Alice QA',contact:'alice@example.test',details:'Create a Telegram service catalog bot with owner notifications.',amount:1,paymentStatus:'Paid'});assert.equal(r.status,201,JSON.stringify(r));let o=r.data.order;assert.equal(o.amount,null);assert.equal(o.paymentStatus,'Unpaid');
  r=await call('bob','/api/orders/'+o.id);assert.equal(r.status,404,JSON.stringify(r));
  r=await call('owner','/api/owner/orders','POST',{id:o.id,version:o.version,action:'quote',amount:15000});assert.equal(r.status,200,JSON.stringify(r));o=r.data.order;
