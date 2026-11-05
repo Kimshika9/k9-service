@@ -5,9 +5,12 @@ import {ArrowDown,ArrowUpRight} from 'lucide-react';
 import GradientASCII from '../components/k9/GradientASCII';
 import {money,type Service} from '../lib/catalog';
 import {loadTelegramSDK} from '../lib/telegram-launch';
+import orbitEn from './orbit/en';
+import orbitMy from './orbit/my';
 
 const background = '#060a1c';
 const palette = ['#1e3fd8','#f6f8ff','#a5d8ff','#38bdf8'];
+const webPalette = ['#4a2fd1','#f6f3ff','#cdbcff','#8b7cf6'];
 type OrderButton = {
  setParams: (params:{text:string;color:string;text_color:string})=>void;
  show:()=>void; hide:()=>void; onClick:(handler:()=>void)=>void; offClick:(handler:()=>void)=>void;
@@ -29,6 +32,7 @@ export default function HorizonCatalog({services,name,lang,error,onRetry,onOrder
 }) {
  const [selection,setSelection]=useState<string|null>(null);
  const [host,setHost]=useState<Telegram>();
+ const [browser,setBrowser]=useState(false);
  const service=services.find(s=>s.id===selection);
  const mm=lang==='MM';
  const action=service?(mm?'အော်ဒါစတင်ရန်':`Order ${service.name}`):(mm?'ဝန်ဆောင်မှုတစ်ခု ရွေးပါ':'Choose a service to continue');
@@ -38,7 +42,7 @@ export default function HorizonCatalog({services,name,lang,error,onRetry,onOrder
   void loadTelegramSDK().then(()=>{
    if(!active) return;
    app=telegram();
-   if(!app) return;
+   if(!app){setBrowser(true);return;}
    app.ready?.();
    app.expand?.();
    app.setHeaderColor?.(background);
@@ -59,11 +63,12 @@ export default function HorizonCatalog({services,name,lang,error,onRetry,onOrder
   button.show();
   return ()=>{button.offClick(order);button.hide();};
  },[action,host,modalOpen,onOrder,service]);
- return <div className="horizon-home">
+ return <div className={browser?"horizon-home horizon-web":"horizon-home"}>
   <section className="horizon-hero" aria-labelledby="horizon-title">
    <div className="horizon-graphics" aria-hidden="true">
-    <GradientASCII colors={palette} shape="horizon" characters=" =+xX0S8#@" cellSize={18}
-      density={0.8} dpr={1.5} style={undefined}/>
+    <GradientASCII colors={browser?webPalette:palette} shape="horizon" characters=" =+xX0S8#@" cellSize={browser?24:18}
+      density={browser?.45:.8} glyphOpacity={browser?.55:.85} glow={browser?.12:.2} speed={browser?.3:1}
+      flicker={browser?0:.2} grain={browser?0:.08} clickEffect={browser?'none':'wave'} dpr={1.5} style={undefined}/>
    </div>
    <div className="horizon-wrap horizon-top">
     <span className="horizon-kicker">K9 / SERVICE CENTER</span>
@@ -73,6 +78,7 @@ export default function HorizonCatalog({services,name,lang,error,onRetry,onOrder
     <p className="horizon-kicker"><span/> {mm?'လိုအပ်ချက်အလိုက် ဖန်တီးပေးမယ်':'BUILT AROUND YOUR IDEA'}</p>
     <h1 id="horizon-title">{mm?<>စိတ်ကူးကို<br/><em>အသက်သွင်းမယ်။</em></>:<>Your next<br/><em>build starts here.</em></>}</h1>
     <p>{mm?'Telegram Bot၊ Mini App နဲ့ Website တွေအတွက် ဝန်ဆောင်မှုတစ်ခုရွေးပြီး Project စတင်ပါ။':'Telegram bots, Mini Apps, and websites. Choose a service and tell us what you want to build.'}</p>
+    {browser&&<a className="horizon-orbit-link" href="/orbit">{(mm?orbitMy:orbitEn).explore}<ArrowUpRight size={18}/></a>}
     <a href="#horizon-services" onClick={event=>{
      event.preventDefault();
      document.getElementById('horizon-services')?.scrollIntoView();

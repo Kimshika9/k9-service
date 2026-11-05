@@ -1,0 +1,15 @@
+.orbit-page, .horizon-web {
+ --orbit-void: var(--bg);
+ --orbit-ink: var(--panel);
+ --orbit-line: #a78bfa37;
+ --orbit-text: var(--text);
+ --orbit-muted: #c4bdd8;
+ --orbit-lavender: #d9c9ff;
+ --orbit-violet: var(--violet);
+ --orbit-accent: #8f7cf0;
+ --orbit-button-ink: #0b0818;
+ --orbit-veil: #08070cd9;
+ --orbit-scene-ink: #18102a;
+ --orbit-scene-indigo: #5b4bdb;
+ --orbit-scene-ice: #dcd6ff;
+}

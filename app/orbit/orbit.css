@@ -1,0 +1,48 @@
+.orbit-page{min-height:100svh;background:var(--orbit-void);color:var(--orbit-text);padding:0 0 max(44px,env(safe-area-inset-bottom));font-size:17px;line-height:1.55}
+.orbit-page[lang=my]{font-family:'Noto Sans Myanmar',Padauk,Pyidaungsu,sans-serif;font-size:18px;line-height:1.8}
+.orbit-wrap{width:min(100% - 36px,1250px);margin-inline:auto}
+.orbit-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:16px;border-bottom:1px solid var(--orbit-line)}
+.orbit-brand,.orbit-languages,.orbit-controls,.orbit-actions{display:flex;align-items:center;gap:12px}
+.orbit-brand{min-height:48px;font-weight:700;color:inherit}
+.orbit-brand img{width:36px;height:36px;object-fit:contain}
+.orbit-page button,.orbit-primary{min-height:48px;padding:9px 13px;border:1px solid var(--orbit-line);border-radius:10px;color:inherit}
+.orbit-page button:not(:disabled):hover,.orbit-page button[aria-pressed=true]{background:var(--orbit-ink);border-color:var(--orbit-violet)}
+.orbit-page :is(button,a):focus-visible{outline:2px solid var(--orbit-lavender);outline-offset:3px}
+.orbit-page button:disabled{opacity:.52;cursor:default}
+.orbit-intro{padding-block:clamp(30px,5vw,66px) 25px}
+.orbit-intro p,.orbit-panel p{margin:0;color:var(--orbit-muted)}
+.orbit-intro h1{margin:0 0 5px;font:700 clamp(42px,9vw,92px)/1.15 var(--font-display);letter-spacing:-.045em;background:linear-gradient(110deg,var(--orbit-lavender),var(--orbit-accent));background-clip:text;color:transparent}
+.orbit-intro p:last-child{max-width:52ch}
+.orbit-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,340px);gap:20px;align-items:start}
+.orbit-stage,.orbit-panel{min-width:0;border:1px solid var(--orbit-line);border-radius:19px;background:var(--orbit-ink)}
+.orbit-viewport{position:relative;overflow:hidden;border-radius:18px 18px 0 0;aspect-ratio:1.6;background:var(--orbit-void) url('/brand/void.jpg') center / cover no-repeat}
+.orbit-viewport canvas{display:block;position:absolute;inset:0;width:100%;height:100%;visibility:hidden;touch-action:pan-y}
+.orbit-viewport[data-visual=ready] canvas{visibility:visible}
+.orbit-expand{position:absolute;right:12px;top:12px;z-index:2;background:var(--orbit-veil);display:flex;align-items:center;gap:8px}
+.orbit-marker{display:none;position:absolute;width:24px;height:24px;border:1px solid var(--orbit-lavender);border-radius:100%;pointer-events:none;transform:translate(-50%,-50%);}
+.orbit-marker span{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:4px;padding:3px 8px;border-radius:6px;background:var(--orbit-veil);white-space:nowrap;font-size:14px;color:var(--orbit-text)}
+.orbit-controls{padding:14px;flex-wrap:wrap}
+.orbit-controls button{display:flex;align-items:center;gap:7px;font-size:14px}
+.orbit-scene-note,.orbit-expanded-selection{padding:0 14px 14px;margin:0;font-size:14px;color:var(--orbit-muted)}
+.orbit-stage.is-expanded{position:fixed;inset:0;z-index:100;background:var(--orbit-void);border-radius:0;display:flex;flex-direction:column;padding:max(8px,env(safe-area-inset-top)) 10px max(6px,env(safe-area-inset-bottom));overscroll-behavior:contain}
+.is-expanded .orbit-viewport{flex:1;min-height:0;aspect-ratio:auto}
+.is-expanded canvas{touch-action:none}
+.orbit-panel{padding:20px}
+.orbit-panel h2{margin:6px 0 10px;font-size:25px;line-height:1.35}
+.orbit-panel .orbit-description{min-height:3.1em}
+.orbit-panel-label{font-size:14px}
+.orbit-actions{flex-wrap:wrap;margin-top:14px}
+.orbit-page .orbit-primary{display:inline-flex;align-items:center;gap:8px;min-height:56px;color:var(--orbit-button-ink);font-weight:750;background:linear-gradient(120deg,var(--orbit-lavender),var(--orbit-violet))}
+.orbit-services{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:8px}
+.orbit-services button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:start}
+.orbit-services svg{flex:none}
+.orbit-page[lang=my] :is(h1,h2,button){letter-spacing:normal;line-height:1.75}
+@media(max-width:810px){
+ .orbit-layout{grid-template-columns:1fr}
+ .orbit-viewport{aspect-ratio:1.22}
+}
+@media(max-width:390px){
+ .orbit-wrap{width:calc(100% - 24px)}
+ .orbit-brand img{display:none}
+ .orbit-languages,.orbit-controls{gap:7px}
+}
