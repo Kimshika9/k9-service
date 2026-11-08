@@ -1,0 +1,18 @@
+{
+  "rich_messages": true,
+  "button_icons": true,
+  "button_styles": {
+    "confirm": "success",
+    "approve": "success",
+    "done": "success",
+    "cancel": "danger",
+    "delete": "danger",
+    "confirm_delete": "danger",
+    "process": "primary",
+    "start": "success",
+    "stop": "danger",
+    "restart": "primary",
+    "stage": "primary"
+  },
+  "default_button_style": "primary"
+}

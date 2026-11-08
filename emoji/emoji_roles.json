@@ -1,0 +1,37 @@
+{
+  "thanks": {
+    "pack": "CATS",
+    "emoji": null,
+    "fallback": "🐱"
+  },
+  "welcome": {
+    "pack": "CATS",
+    "emoji": null,
+    "fallback": "🐱"
+  },
+  "chat": {
+    "pack": "CATS",
+    "emoji": null,
+    "fallback": "🐱"
+  },
+  "order": {
+    "pack": "WORK",
+    "emoji": null,
+    "fallback": "💼"
+  },
+  "price": {
+    "pack": "WORK",
+    "emoji": null,
+    "fallback": "💰"
+  },
+  "payment": {
+    "pack": "WORK",
+    "emoji": null,
+    "fallback": "💳"
+  },
+  "announcement": {
+    "pack": "NEWS",
+    "emoji": null,
+    "fallback": "📣"
+  }
+}

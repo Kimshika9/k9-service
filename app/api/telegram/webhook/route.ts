@@ -2,11 +2,12 @@ import { getDb } from '../../../../db';
 import { orders,botSessions,webhookUpdates } from '../../../../db/schema';
 import { eq,desc } from 'drizzle-orm';
 import { runtime,catalog,json } from '../../../../lib/server';
-import { telegram,notifyOwner,orderRichHtml } from '../../../../lib/telegram';
+import { telegram,notifyOwner,orderRichHtml,sendPresented } from '../../../../lib/telegram';
 import { createOrder, getOrder, ownerAction } from '../../../../lib/order-engine';
 import { enqueueHosting, hostingEnabled, hostingJob } from '../../../../lib/hosting';
+import { e as emojiTag } from '../../../../lib/emoji';
 async function session(chat:string,data:unknown){await getDb().insert(botSessions).values({chatId:chat,data:JSON.stringify(data),updatedAt:new Date().toISOString()}).onConflictDoUpdate({target:botSessions.chatId,set:{data:JSON.stringify(data),updatedAt:new Date().toISOString()}});}
-async function say(chat:string,text:string,reply_markup?:unknown){return telegram('sendMessage',{chat_id:chat,text,reply_markup});}
+async function say(chat:string,text:string,reply_markup?:unknown,role='order'){return sendPresented(chat,text,reply_markup,role);}
 export async function POST(request:Request){const e=runtime();if(!e.TELEGRAM_WEBHOOK_SECRET||request.headers.get('x-telegram-bot-api-secret-token')!==e.TELEGRAM_WEBHOOK_SECRET)return json({error:'Unauthorized'},401);let updateId:number|undefined;let claimedUpdate=false;try{const update=await request.json() as any;updateId=update.update_id;if(!Number.isSafeInteger(updateId))return json({ok:true});const cb=update.callback_query;const msg=update.message||cb?.message;const from=update.message?.from||cb?.from;
 if(!msg||!from||msg.chat.type!=='private')return json({ok:true});
 const chat=String(msg.chat.id);const text=update.message?.text||'';const data=cb?.data||'';
@@ -20,7 +21,7 @@ if(job){
 }
 const claimed=await getDb().insert(webhookUpdates).values({id:updateId!,createdAt:new Date().toISOString()}).onConflictDoNothing().returning();if(!claimed.length)return json({ok:true});claimedUpdate=true;
 if(cb)await telegram('answerCallbackQuery',{callback_query_id:cb.id});
-if(data.startsWith('status:')){if(String(from.id)!==e.OWNER_TELEGRAM_ID)return json({ok:true});const [,id,action]=data.split(':');if(!['approve','process','done'].includes(action))return json({ok:true});try{const o=await getOrder(id);const next=await ownerAction({key:'tg:'+from.id,name:from.first_name||'Owner',contact:String(from.id),telegram:chat,isOwner:true},{id,action,version:o.version});try{await telegram('editMessageText',{chat_id:chat,message_id:msg.message_id,rich_message:{html:orderRichHtml(next)}});}catch{}if(next.telegramChat)await say(next.telegramChat,`K9 Service · ${next.serviceName}\nStatus: ${next.status}`);}catch(err){await say(chat,(err as Error).message+' Open the Owner Page to review payment and order details.');}return json({ok:true});}
+if(data.startsWith('status:')){if(String(from.id)!==e.OWNER_TELEGRAM_ID)return json({ok:true});const [,id,action]=data.split(':');if(!['approve','process','done'].includes(action))return json({ok:true});try{const o=await getOrder(id);const next=await ownerAction({key:'tg:'+from.id,name:from.first_name||'Owner',contact:String(from.id),telegram:chat,isOwner:true},{id,action,version:o.version});try{await telegram('editMessageText',{chat_id:chat,message_id:msg.message_id,rich_message:{html:'<p>'+emojiTag('order')+'</p>'+orderRichHtml(next)}});}catch{}if(next.telegramChat)await say(next.telegramChat,`K9 Service · ${next.serviceName}\nStatus: ${next.status}`);}catch(err){await say(chat,(err as Error).message+' Open the Owner Page to review payment and order details.');}return json({ok:true});}
 if(text==='/id'){await say(chat,'Your Telegram user ID: '+from.id+'\nUse this numeric ID as OWNER_TELEGRAM_ID only for your own owner account.');return json({ok:true});}
 if(isOwner){
  const buttons=[];
@@ -30,7 +31,7 @@ if(isOwner){
  return json({ok:true});
 }
 if(text==='/cancel'||data==='cancel'){await getDb().delete(botSessions).where(eq(botSessions.chatId,chat));await say(chat,'Draft cancelled. Use /order whenever you’re ready.');return json({ok:true});}
-if(/^\/(start|services|order)( |$)/.test(text)){const list=await catalog();await session(chat,{step:'pick'});const keyboard=list.map(s=>[{text:s.name,callback_data:`pick:${s.id}`}]);if(e.SITE_URL)keyboard.unshift([{text:'Open Mini App',web_app:{url:e.SITE_URL}}] as any);await say(chat,'K9 SERVICE\nOne identity. Many capabilities.\n\nChoose a service to start your direct order, or open the Mini App.',{inline_keyboard:keyboard});return json({ok:true});}
+if(/^\/(start|services|order)( |$)/.test(text)){const list=await catalog();await session(chat,{step:'pick'});const keyboard=list.map(s=>[{text:s.name,callback_data:`pick:${s.id}`}]);if(e.SITE_URL)keyboard.unshift([{text:'Open Mini App',web_app:{url:e.SITE_URL}}] as any);await say(chat,'K9 SERVICE\nOne identity. Many capabilities.\n\nChoose a service to start your direct order, or open the Mini App.',{inline_keyboard:keyboard},text.startsWith('/start')?'welcome':'order');return json({ok:true});}
 if(text==='/orders'){const list=await getDb().select().from(orders).where(eq(orders.customerKey,`tg:${from.id}`)).orderBy(desc(orders.createdAt)).limit(10);await say(chat,list.length?list.map(o=>`${o.serviceName} · ${o.status}\n${o.id.slice(0,11)}`).join('\n\n'):'You have no orders yet. Use /order to start.');return json({ok:true});}
 const saved=await getDb().select().from(botSessions).where(eq(botSessions.chatId,chat)).get();let draft=saved&&Date.now()-Date.parse(saved.updatedAt)<86400000?JSON.parse(saved.data):null;
 if(data.startsWith('pick:')){const s=(await catalog()).find(s=>s.id===data.slice(5));if(!s)return json({ok:true});draft={step:'details',serviceId:s.id,requestId:crypto.randomUUID()};await session(chat,draft);await say(chat,`${s.name}\n\nTell us about your project in one message. Include requirements and reference links.\n\n${s.requirements.map(r=>'• '+r).join('\n')}\n\n/cancel to discard.`);return json({ok:true});}

@@ -1,0 +1,23 @@
+[
+  {
+    "key": "CATS",
+    "name": "Whitecuteslove_by_TgEmojis_bot",
+    "purpose": "warm, friendly messages",
+    "default": null,
+    "fallback": "🐱"
+  },
+  {
+    "key": "WORK",
+    "name": "TranslucentPack",
+    "purpose": "business and service",
+    "default": null,
+    "fallback": "💼"
+  },
+  {
+    "key": "NEWS",
+    "name": "NewsEmoji",
+    "purpose": "announcements and updates",
+    "default": null,
+    "fallback": "📣"
+  }
+]

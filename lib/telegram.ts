@@ -2,6 +2,7 @@ import { runtime } from './server';
 import { getDb } from '../db';
 import { orders } from '../db/schema';
 import { eq } from 'drizzle-orm';
+import {e,htmlEscape,decorateButtons,presentationSettings} from './emoji';
 export async function telegram(method:string,payload:unknown){
  const token=runtime().BOT_TOKEN;if(!token)throw new Error('Bot token is not configured');
  let res:Response;try{res=await fetch(`https://api.telegram.org/bot${token}/${method}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(12000)});}catch{throw new Error(`Telegram ${method} could not be reached.`);}
@@ -9,9 +10,20 @@ export async function telegram(method:string,payload:unknown){
  if(!res.ok||!data?.ok){const e=new Error(typeof data?.description==='string'?data.description.replaceAll(token,'[redacted]'):`Telegram ${method} failed.`) as Error&{code?:number};e.code=data?.error_code||res.status;throw e;}return data.result;
 }
 export const esc=(s:unknown)=>String(s??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
+export async function sendPresented(chat:string,text:string,reply_markup?:unknown,role='order',richHtml?:string){
+ const html=htmlEscape(text);
+ const marked=decorateButtons(reply_markup);
+ if(presentationSettings.rich_messages){
+  try{return await telegram('sendRichMessage',{chat_id:chat,rich_message:{html:`<p>${e(role)}</p>`+(richHtml??`<p>${html.replaceAll('\n','<br>')}</p>`)},reply_markup:marked});}
+  catch(error){if((error as Error&{code?:number}).code!==400)throw error;}
+ }
+ try{return await telegram('sendMessage',{chat_id:chat,text:`${e(role)} ${html}`,parse_mode:'HTML',reply_markup:marked});}
+ catch(error){if((error as Error&{code?:number}).code!==400)throw error;}
+ return telegram('sendMessage',{chat_id:chat,text:`${e(role,undefined,false)} ${html}`,parse_mode:'HTML',reply_markup:decorateButtons(reply_markup,false)});
+}
 export function orderRichHtml(o:any){const rows=[['Order',o.id],['Customer',o.customer],['Contact',o.contact],['Service',o.serviceName],['Budget',o.budget||'To discuss'],['Deadline',o.deadline||'Flexible'],['Source',o.source],['Order status',o.status],['Amount',o.amount==null?'Quote pending':o.amount+' MMK'],['Payment',o.paymentStatus||'Unpaid']];return `<h2>K9 SERVICE · ${o.status==='New'?'NEW ORDER':'ORDER UPDATE'}</h2><table>${rows.map(([k,v])=>`<tr><th>${k}</th><td>${esc(v)}</td></tr>`).join('')}</table><h3>Project brief</h3><p>${esc(o.details)}</p>${o.reference?`<h3>References</h3><p>${esc(o.reference)}</p>`:''}<p>One identity. Many capabilities.</p>`;}
 export function orderPlainText(o:any){return `K9 SERVICE · ORDER UPDATE\nOrder: ${o.id}\nCustomer: ${o.customer}\nService: ${o.serviceName}\nStatus: ${o.status}\nAmount: ${o.amount==null?'Quote pending':o.amount+' MMK'}\nPayment: ${o.paymentStatus||'Unpaid'}\n\n${o.details||''}`.slice(0,3800);}
-export async function notifyOwner(id:string,force=false){const e=runtime();if(!e.BOT_TOKEN||!e.OWNER_TELEGRAM_ID)return 'pending';const o=await getDb().select().from(orders).where(eq(orders.id,id)).get();if(!o||o.notification==='sent'&&!force)return o?.notification||'pending';const reply_markup={inline_keyboard:[[{text:'Approve',callback_data:`status:${id}:approve`},{text:'Processing',callback_data:`status:${id}:process`}],[{text:'Done',callback_data:`status:${id}:done`},{text:'Open Owner Page',web_app:{url:(e.SITE_URL||'').replace(/\/$/,'')+'/owner'}}]]};try{let result;try{result=await telegram('sendRichMessage',{chat_id:e.OWNER_TELEGRAM_ID,rich_message:{html:orderRichHtml(o)},reply_markup});}catch(err){if((err as Error&{code?:number}).code!==400)throw err;result=await telegram('sendMessage',{chat_id:e.OWNER_TELEGRAM_ID,text:orderPlainText(o),reply_markup});}await getDb().update(orders).set({notification:'sent',notificationMessage:result.message_id}).where(eq(orders.id,id));return 'sent';}catch{await getDb().update(orders).set({notification:'failed'}).where(eq(orders.id,id));return 'failed';}}
+export async function notifyOwner(id:string,force=false){const e=runtime();if(!e.BOT_TOKEN||!e.OWNER_TELEGRAM_ID)return 'pending';const o=await getDb().select().from(orders).where(eq(orders.id,id)).get();if(!o||o.notification==='sent'&&!force)return o?.notification||'pending';const reply_markup={inline_keyboard:[[{text:'Approve',callback_data:`status:${id}:approve`},{text:'Processing',callback_data:`status:${id}:process`}],[{text:'Done',callback_data:`status:${id}:done`},{text:'Open Owner Page',web_app:{url:(e.SITE_URL||'').replace(/\/$/,'')+'/owner'}}]]};try{const result=await sendPresented(e.OWNER_TELEGRAM_ID,orderPlainText(o),reply_markup,'order',orderRichHtml(o));await getDb().update(orders).set({notification:'sent',notificationMessage:result.message_id}).where(eq(orders.id,id));return 'sent';}catch{await getDb().update(orders).set({notification:'failed'}).where(eq(orders.id,id));return 'failed';}}
 
 let identityCache:{token:string;value:{id:number;username:string};expires:number}|undefined;
 export async function botIdentity(){
