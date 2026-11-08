@@ -129,4 +129,12 @@ If the Mini App receives an HTML 403 page, it now displays the HTTP status and a
 
 The Owner's **Hosting** menu manages Python and Node bot projects on a Docker VPS. The Service Bot webhook, orders, and Mini App use Cloudflare. See [VPS Hosting setup (MM)](VPS_HOSTING_MM.md) for configuration and live verification.
 
-For the managed Bot-Hosting.net Starter plan, follow [Starter ZIP setup (MM)](STARTER_SETUP_MM.md).
+For one Bot-Hosting.net Free deployment, follow [Single-deployment setup (MM)](STARTER_SETUP_MM.md).
+The `start_hosting.py` entrypoint defaults to `local`: a lightweight supervisor with project venvs,
+bounded logs, restart recovery and resource guards. It runs trusted owner projects under the same
+OS user; it does not provide container isolation. Node projects require Node/npm in the deployment.
+The default is at most two running projects, subject to measured memory and the provider's limits.
+No provider API key or separate child deployment is needed in this mode.
+
+The earlier paid managed adapter is still available via `K9_HOSTING_RUNTIME=bot-hosting`;
+see [Managed two-deployment setup (MM)](MANAGED_STARTER_SETUP_MM.md).

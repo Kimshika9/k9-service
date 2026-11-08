@@ -1,4 +1,4 @@
-"""Process K9 Hosting jobs on a Docker VPS while the Service Bot uses its Worker webhook."""
+"""Process owner Hosting jobs; Service Bot orders and webhook remain on Cloudflare."""
 from __future__ import annotations
 
 import argparse
@@ -6,6 +6,8 @@ import fcntl
 import json
 import os
 import re
+import shutil
+import signal
 import sqlite3
 import sys
 import tempfile
@@ -18,6 +20,7 @@ from urllib.request import urlopen
 
 from bot import ConnectionError, load_config, request_json, telegram, validate, website_check
 from .managed import BotHosting
+from .local import Local
 from .projects import Docker, MAX_UPLOAD, ProjectError, Projects, RUNTIMES
 
 
@@ -32,7 +35,9 @@ class HostingWorker:
         self.owner = int(config['OWNER_TELEGRAM_ID'])
         self.projects = Projects(root)
         self.managed = mode == "bot-hosting"
-        self.runtime = BotHosting(self.projects) if self.managed else Docker(self.projects)
+        self.local = mode == 'local'
+        self.runtime = (Local(self.projects, [config.get('BOT_TOKEN'), config.get('TELEGRAM_WEBHOOK_SECRET'), secret])
+                        if self.local else BotHosting(self.projects) if self.managed else Docker(self.projects))
         self.history = sqlite3.connect(root / 'job-results.sqlite')
         self.history.execute('CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY, result TEXT, done INTEGER)')
 
@@ -68,8 +73,8 @@ class HostingWorker:
         status = self.runtime.state(project)
         controls = [[button('▶ Start', f'start:{pid}'), button('■ Stop', f'stop:{pid}'),
                      button('↻ Restart', f'restart:{pid}')]]
-        if self.managed and not project.get('managed_staged'):
-            controls = [[button('Stage deployment', f'stage:{pid}')]]
+        if self.managed and not project.get('managed_staged') or self.local and not project.get('local_prepared'):
+            controls = [[button('Prepare runtime' if self.local else 'Stage deployment', f'stage:{pid}')]]
         return {'text': '\n'.join(filter(None, [notice, project['name'], 'Project ID  ' + pid,
                          f"Entry  {project['entry']}", f"Status  {status}"])),
                 'rows': controls + [[button('Logs', f'logs:{pid}'), button('Refresh', f'view:{pid}'),
@@ -98,6 +103,8 @@ class HostingWorker:
             return self.card(self.projects.get(pid), 'Upload saved.')
         if self.managed and self.projects.list():
             raise ProjectError('Starter has one child slot. Remove the previous project before uploading another.')
+        if self.local:
+            self.runtime.guard()
         name, file_id, size = (file.get(key) for key in ('name', 'id', 'size'))
         if not isinstance(name, str) or Path(name).suffix.lower() not in {*RUNTIMES, '.zip'}:
             raise ProjectError('Upload a .py, .js or .zip document.')
@@ -124,6 +131,12 @@ class HostingWorker:
                 project = self.projects.upload(pid, name, source)
         except (URLError, OSError):
             raise ProjectError('The file download or storage failed. Please upload again.') from None
+        if self.local:
+            try:
+                self.runtime.guard()
+            except ProjectError:
+                shutil.rmtree(self.projects.apps / pid)
+                raise
         return self.card(project, 'Upload saved.')
 
     def handle(self, job_id: int, payload: dict) -> dict:
@@ -158,7 +171,7 @@ class HostingWorker:
             detail = 'The child deployment and its data will also be deleted.' if self.managed and project.get('managed_id') else 'Saved project data will also be removed.'
             return {'text': f"Delete {project['name']}? {detail}",
                     'rows': [[button('Delete project', f'delete:{pid}'), button('Cancel', f'view:{pid}')]]}
-        if action not in {'start', 'stop', 'restart', 'logs', 'delete'} and not (self.managed and action == 'stage'):
+        if action not in {'start', 'stop', 'restart', 'logs', 'delete'} and not ((self.managed or self.local) and action == 'stage'):
             raise ProjectError('This button is no longer available.')
         result = self.runtime.action(project, action)
         if action == 'delete':
@@ -180,7 +193,7 @@ class HostingWorker:
                     raise
                 reply = {'text': 'Telegram rejected the request. Open Hosting and try again.'}
             except (OSError, ValueError, TypeError, KeyError):
-                reply = {'text': 'Could not process this job. Check the VPS and reopen Hosting.'}
+                reply = {'text': 'Could not process this job. Check the hosting console and reopen Hosting.'}
             self.history.execute('INSERT INTO jobs VALUES (?, ?, ?)', (job_id, json.dumps(reply), int(time.time())))
             self.history.execute('DELETE FROM jobs WHERE done < ?', (int(time.time()) - 86400,))
             self.history.commit()
@@ -205,6 +218,10 @@ class HostingWorker:
         self.queue('ack', id=job_id, lease=job['lease'])
 
 
+def stop_worker(*_) -> None:
+    raise KeyboardInterrupt
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true', help='Check the hosting runtime, Telegram and the Worker queue')
@@ -216,8 +233,8 @@ def main() -> int:
         if not re.fullmatch(r'[A-Za-z0-9_-]{32,128}', secret) or secret == config['TELEGRAM_WEBHOOK_SECRET']:
             raise ProjectError('Set a separate K9_HOSTING_SECRET of 32–128 letters, digits, _ or -.')
         mode = os.getenv('K9_HOSTING_RUNTIME', 'docker')
-        if mode not in {'docker', 'bot-hosting'}:
-            raise ProjectError('K9_HOSTING_RUNTIME must be docker or bot-hosting.')
+        if mode not in {'docker', 'bot-hosting', 'local'}:
+            raise ProjectError('K9_HOSTING_RUNTIME must be local, docker or bot-hosting.')
         root = Path(os.environ['K9_HOSTING_DIR']).expanduser().resolve()
         root.mkdir(parents=True, mode=0o700, exist_ok=True)
         if root.stat().st_mode & 0o077:
@@ -228,32 +245,41 @@ def main() -> int:
             except BlockingIOError:
                 raise ProjectError('A hosting worker is already using this data directory.') from None
             worker = HostingWorker(config, secret, root, mode)
-            worker.runtime.check()
-            website_check(config, telegram(config, 'getMe'))
-            info = telegram(config, 'getWebhookInfo')
-            if info.get('url') != config['SITE_URL'] + '/api/telegram/webhook':
-                raise ProjectError('Connect the Service Bot webhook with python3 bot.py --connect first.')
-            worker.queue('check')
-            print(f'K9 Hosting is connected to {worker.runtime.label} and the Cloudflare queue.', flush=True)
-            if args.check:
-                return 0
-            pending = None
-            idle = 2
-            while True:
-                try:
-                    pending = pending or worker.queue('claim')['job']
-                    if pending:
-                        worker.process(pending)
-                        pending = None
-                        idle = 2
-                    else:
-                        time.sleep(idle)
-                        idle = min(idle + 1, 10)
-                except ConnectionError as exc:
-                    if exc.code in {401, 403, 409}:
-                        raise
-                    print('Hosting connection interrupted. Retrying.', flush=True)
-                    time.sleep(min(30, max(3, exc.retry_after)))
+            previous_term = signal.signal(signal.SIGTERM, stop_worker)
+            try:
+                worker.runtime.check()
+                website_check(config, telegram(config, 'getMe'))
+                info = telegram(config, 'getWebhookInfo')
+                if info.get('url') != config['SITE_URL'] + '/api/telegram/webhook':
+                    raise ProjectError('Connect the Service Bot webhook with python3 bot.py --connect first.')
+                worker.queue('check')
+                print(f'K9 Hosting is connected to {worker.runtime.label} and the Cloudflare queue.', flush=True)
+                if args.check:
+                    return 0
+                if worker.local:
+                    worker.runtime.start_supervisor()
+                pending = None
+                idle = 2
+                while True:
+                    try:
+                        pending = pending or worker.queue('claim')['job']
+                        if pending:
+                            worker.process(pending)
+                            pending = None
+                            idle = 2
+                        else:
+                            time.sleep(idle)
+                            idle = min(idle + 1, 10)
+                    except ConnectionError as exc:
+                        if exc.code in {401, 403, 409}:
+                            raise
+                        print('Hosting connection interrupted. Retrying.', flush=True)
+                        time.sleep(min(30, max(3, exc.retry_after)))
+            finally:
+                if worker.local:
+                    worker.runtime.close()
+                worker.history.close()
+                signal.signal(signal.SIGTERM, previous_term)
     except KeyboardInterrupt:
         return 0
     except (ConnectionError, ProjectError) as exc:
