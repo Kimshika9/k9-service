@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import {emojiTools,htmlEscape,decorateButtons} from '../lib/emoji.ts';
+// Deliberately synthetic IDs used only in this offline test, never shipped in the catalog.
+const packs=[{key:'CATS',name:'cats',purpose:'warm',default:'cat',fallback:'🐱'},{key:'WORK',name:'work',purpose:'business',default:'work',fallback:'💼'}];
+const roles={welcome:{pack:'CATS',emoji:'cat'},order:{pack:'WORK',emoji:null}};
+const catalog=[{key:'cat',pack:'CATS',pack_name:'cats',fallback:'🐱',custom_emoji_id:'10001'},{key:'work',pack:'WORK',pack_name:'work',fallback:'💼',custom_emoji_id:'10002'}];
+const tools=emojiTools(packs,roles,catalog);
+assert.equal(tools.e('welcome'),'<tg-emoji emoji-id="10001">🐱</tg-emoji>');
+assert.equal(tools.e('order'),'<tg-emoji emoji-id="10002">💼</tg-emoji>');
+assert.equal(tools.e('welcome','WORK'),'<tg-emoji emoji-id="10002">💼</tg-emoji>');
+assert.equal(emojiTools(packs,roles,[]).e('welcome'),'🐱');
+assert.equal(tools.e('new-unapproved-role'),'<tg-emoji emoji-id="10001">🐱</tg-emoji>');
+assert.equal(tools.e('welcome',undefined,false),'🐱');
+assert.equal(htmlEscape('<script>&"\''),'&lt;script&gt;&amp;&quot;&#39;');
+const input={inline_keyboard:[[{text:'Approve',callback_data:'status:id:approve'}],[{text:'Cancel',callback_data:'cancel'}]]};
+const output=decorateButtons(input);
+assert.equal(output.inline_keyboard[0][0].style,'success');
+assert.equal(output.inline_keyboard[1][0].style,'danger');
+assert.equal(output.inline_keyboard[0][0].callback_data,'status:id:approve');
+assert.equal(output.inline_keyboard[0][0].text.includes('<tg-emoji'),false);
+assert.deepEqual(decorateButtons(output,false),input);
+assert.deepEqual(decorateButtons({force_reply:true}),{force_reply:true});
+console.log('Emoji: real-catalog-only IDs, purpose guard, defaults, escaping, missing IDs and native button fallback passed.');

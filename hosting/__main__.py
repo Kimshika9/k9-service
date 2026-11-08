@@ -19,6 +19,7 @@ from urllib.parse import quote
 from urllib.request import urlopen
 
 from bot import ConnectionError, load_config, request_json, telegram, validate, website_check
+from emoji_helpers import e, buttons as style_buttons, config as emoji_config
 from .managed import BotHosting
 from .local import Local
 from .projects import Docker, MAX_UPLOAD, ProjectError, Projects, RUNTIMES
@@ -46,20 +47,28 @@ class HostingWorker:
                             {'op': operation, 'ownerId': str(self.owner), **fields}, {'x-k9-hosting-secret': self.secret}, timeout=20)
 
     def send(self, text: str, rows: list | None = None, *, rich: bool = False) -> dict:
-        body = {'chat_id': self.owner, 'text': text}
+        body = {'chat_id': self.owner, 'text': e('order', 'WORK') + ' ' + escape(text, quote=False), 'parse_mode': 'HTML'}
         if rows is not None:
-            body['reply_markup'] = {'inline_keyboard': rows}
-        if rich:
+            body['reply_markup'] = {'inline_keyboard': style_buttons(rows)}
+        if emoji_config('presentation.json', {}).get('rich_messages', True):
             try:
                 return telegram(self.config, 'sendRichMessage', {
                     'chat_id': self.owner,
-                    'rich_message': {'html': '<h2>K9 Hosting</h2><p>' + escape(text) + '</p>'},
+                    'rich_message': {'html': '<p>' + e('order', 'WORK') + '</p><h2>K9 Hosting</h2><p>' + escape(text).replace('\n', '<br>') + '</p>'},
                     'reply_markup': body.get('reply_markup'),
                 })
             except ConnectionError as exc:
                 if exc.code != 400:
                     raise
-        return telegram(self.config, 'sendMessage', body)
+        try:
+            return telegram(self.config, 'sendMessage', body)
+        except ConnectionError as exc:
+            if exc.code != 400:
+                raise
+            body['text'] = e('order', 'WORK', custom=False) + ' ' + escape(text, quote=False)
+            if rows is not None:
+                body['reply_markup'] = {'inline_keyboard': style_buttons(rows, custom=False)}
+            return telegram(self.config, 'sendMessage', body)
 
     def menu(self) -> dict:
         return {'text': 'Upload and manage your bot projects.', 'rich': True,
