@@ -6,7 +6,7 @@ import GradientASCII from '../../components/k9/GradientASCII';
 import {defaultServices,type Service} from '../../lib/catalog';
 import {briefLimit,draftStorage,resumeDraft,timings,type Draft,type Timing} from './draft';
 import {localizedService,miniCopy} from './copy';
-import type {MiniHost} from './telegram';
+import {loadMiniBotLink,miniBotLink,type MiniHost} from './telegram';
 
 const voidColor='#08070c', violet='#a78bfa', buttonInk='#0b0818';
 const palette=['#4a2fd1','#f6f3ff','#cdbcff','#8b7cf6'];
@@ -28,6 +28,7 @@ export default function MiniOrder({host,services,language,setLanguage,scope,auth
  const [order,setOrder]=useState<string|null>(null);
  const [busy,setBusy]=useState(false);
  const [failed,setFailed]=useState(false);
+ const [resolvedHelpLink,setResolvedHelpLink]=useState<string>();
  const sending=useRef(false);
  const restored=useRef(false);
  const mounted=useRef(false);
@@ -44,9 +45,17 @@ export default function MiniOrder({host,services,language,setLanguage,scope,auth
  const main=host.MainButton;
  const back=host.BackButton;
  const secondary=supported(host,'7.10')?host.SecondaryButton:undefined;
- const bot=(username??'').replace(/^@/,'');
- const helpLink=/^\w{5,32}$/.test(bot)?'https://t.me/'+bot:undefined;
+ const configuredHelpLink=miniBotLink(username);
+ const helpLink=configuredHelpLink??resolvedHelpLink;
 
+ useEffect(()=>{
+  if(configuredHelpLink)return;
+  const request=new AbortController();
+  void loadMiniBotLink(request.signal).then(link=>{
+   if(!request.signal.aborted)setResolvedHelpLink(link);
+  }).catch(()=>{});
+  return ()=>request.abort();
+ },[configuredHelpLink]);
  useEffect(()=>{
   mounted.current=true;
   return ()=>{mounted.current=false;};
