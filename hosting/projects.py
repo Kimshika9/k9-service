@@ -98,7 +98,7 @@ class Projects:
         if (self.apps / project_id).exists():
             return self.get(project_id)
         if len(self.list()) >= MAX_PROJECTS:
-            raise ProjectError(f'This VPS already has {MAX_PROJECTS} projects.')
+            raise ProjectError(f'This host already has {MAX_PROJECTS} saved projects.')
         path = safe_path(name)
         if len(path.parts) != 1 or path.suffix.lower() not in {*RUNTIMES, '.zip'}:
             raise ProjectError('Upload a .py, .js or .zip document.')
