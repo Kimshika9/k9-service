@@ -1,63 +1,56 @@
-# K9 custom emoji, native color buttons and Rich Messages
+# K9 Service Center — Premium Emoji + Rich Message Fix
 
-လက်ရှိ K9 က Cloudflare TypeScript webhook + Python Hosting worker ဖြစ်ပါတယ်။ telebot သို့ ပြန်မပြောင်းပါ။
+လက်ရှိ Cloudflare webhook bot နဲ့ Python Hosting worker ကို ဆက်သုံးထားသည်။ Bot အသစ်ပြန်ဆောက်ခြင်း၊ telebot သို့ ပြောင်းခြင်း၊ polling ထပ် run ခြင်း မလိုပါ။
 
-## Config ဖိုင်များ
+## ပြင်ထားသည်များ
 
-- `emoji/packs.json`: pack name, primary purpose, default key, normal fallback
-- `emoji/emoji_roles.json`: approved role → pack + emoji key
-- `emoji/emoji_ids.json`: Telegram getStickerSet က ထုတ်ထားတဲ့ real IDs, original index, fallback, animated/video flags
-- `emoji/presentation.json`: native button styles, button icon switch, Rich Message switch
+- `emoji/emoji_ids.json`: role -> {id, fallback, pack}။ IDs အားလုံး string ဖြစ်သည်။
+- မူရင်း pack များမှ fetch လုပ်ထားသည့် IDs များကို `emoji/emoji_catalog.json` တွင် သိမ်းထားသည်။ Role defaults တွင် CATS / WORK / NEWS ကို သူ့ purpose အတိုင်း သုံးထားသည်။
+- `emoji_manager.py`: Python emoji, button, send/edit wrappers အားလုံး။ `emoji_helpers.py` သည် အဟောင်း imports အတွက် compatibility file ဖြစ်သည်။
+- `lib/emoji-manager.ts`: Cloudflare D1 တွင် owner ရွေးထားသော roles ကို သိမ်းသည်။ ရှိပြီးသား `settings` table ကို သုံး၍ migration မလိုပါ။
+- Rich Message တွင် emoji ကို heading အစ၌ထားပြီး paragraphs, order table နဲ့ native color buttons ပါသည်။ Telegram က format ကို ပယ်ချမှ error ကို log ရေး၍ HTML fallback သုံးသည်။ Network/permission error ကို format error အဖြစ် မဖုံးကွယ်ပါ။
+- Hosting worker သည် authenticated queue မှ role settings ကို ရယူသည်။ `/addemoji` တစ်ခါပြင်လျှင် နှစ်ဖက်စလုံးမှာ အသက်ဝင်သည်။
 
-သုံးခုလုံး fetch အောင်မြင်ထားပါတယ်။ CATS 40 / WORK 96 / NEWS 100။ `emoji/emoji_list.txt` ကိုကြည့်ပြီး pack + index နဲ့ ရွေးပါ။ Production config မှာ emoji role/default ကို မရွေးထားသေးပါ။ Config null ဖြစ်ချိန်မှာ normal fallback သာသုံးပါတယ်။
+## Owner က အသုံးပြုပုံ
 
-ဥပမာ `welcome` အတွက် CATS နံပါတ်တစ်ခု ရွေးမယ်ဆိုရင် list ထဲက အဲဒီ row ရဲ့ `CATS:...` key တစ်ခုလုံးကို `emoji_roles.json` ရဲ့ `welcome.emoji` မှာထည့်ပါ။ Pack ရဲ့ default ကိုလည်း list ထဲက အဲဒီ pack ရဲ့ key တစ်ခုဖြင့် ရွေးနိုင်ပါတယ်။ ID ကို စိတ်ကြိုက်မထည့်ပါနှင့်။
+1. Bot ကို owner account မှ `/start` ပို့ပါ။
+2. `/emojitest` ကို အရင်ပို့ပါ။ Role တစ်ခုစီ၏ Premium emoji၊ Rich Message heading၊ button icon ကို ကြည့်ပါ။
+3. `/addemoji welcome` ပို့ပြီး CATS pack မှ Premium emoji တစ်ခုကို text အဖြစ် ပို့ပါ။ Sticker/photo မဟုတ်ပါ။
+4. `/addemoji order` ပို့ပြီး WORK pack မှ တစ်ခု ပို့ပါ။
+5. `/addemoji announcement` ပို့ပြီး NEWS pack မှ တစ်ခု ပို့ပါ။
+6. `/emojis` သည် owner-only role / pack / ID စာရင်းဖြစ်သည်။ Customer messages တွင် raw IDs မထွက်ပါ။
+7. `/delemoji welcome` သည် role ၏ custom ID ကို ဖယ်၍ normal fallback ကို ဆက်သုံးသည်။
+8. `/cancel` ဖြင့် emoji ရွေးခြင်းကို ရပ်နိုင်သည်။ ရွေးချယ်ချိန် 10 မိနစ်ဖြစ်သည်။
 
-Roles: thanks / welcome / chat = CATS; order / price / payment = WORK; announcement = NEWS။ Mixed business message က WORK သုံးပါတယ်။ မသိတဲ့ role အတွက် CATS default/fallback ကိုပဲသုံးပြီး config ထဲ role အသစ် အလိုအလျောက်မဖန်တီးပါ။
+Role အသစ်ကို owner ကိုယ်တိုင် `/addemoji my_role WORK` ဟု ထည့်နိုင်သည်။ Role အမည်မှာ English lowercase, digits, underscore ဖြင့် 32 လုံးအထိ ဖြစ်ရမည်။ Pack မသတ်မှတ်ပါက ပို့ထားသော emoji ၏ တကယ့် pack ကို Telegram မှ စစ်၍ ရွေးသည်။ Pack purpose ကို ပြောင်း၍ မရောပါ။
 
-## Phone မှာ refresh လုပ်ရန်
+Pack အသစ်အတွက် `emoji/packs.json` တွင် name, key, purpose, default, fallback ထည့်ပြီး `python3 fetch_emoji.py` ကို run ပါ။ Fetch သည် catalog ကိုသာ ပြင်သည်။ ရွေးထားပြီးသော role IDs ကို မဖျက်ပါ။
 
-ZIP ကိုဖြည်ပြီး `fetch_emoji.py` နဲ့ `emoji/` folder ကို တစ်နေရာတည်းထားပါ။
+## Deployment
 
-Termux:
+Cloudflare source files ကို deploy လုပ်ရန် လိုသည်။ Message rendering နဲ့ owner tools တို့ကို Cloudflare က ဆောင်ရွက်သောကြောင့် ဖြစ်သည်။ Secrets ပြင်စရာ မလိုပါ။
+
+Cloudflare deploy ပြီးမှ Hosting ZIP ထဲက complete files ကို လက်ရှိ deployment ထဲ တင်၍ restart လုပ်ပါ။ `k9-hosting-data` နှင့် environment variables မဖျက်ပါနှင့်။ Entry point သည် `start_hosting.py` အတိုင်း ဖြစ်သည်။
+
+## Phone / Termux / Pydroid 3
+
+လက်ရှိ bot က cloud ပေါ်တွင် run နေ၍ ဖုန်းမှာ polling process ထပ် run စရာမလိုပါ။ စစ်ဆေးချင်လျှင် ZIP ဖြည်ထားသည့် folder မှ connector ကို သုံးပါ။
 
 ```sh
-pkg install python
-python fetch_emoji.py
+python bot.py --setup
+python bot.py --check
+python bot.py --status
 ```
 
-Token မရှိရင် script က device ပေါ်မှာ hidden input နဲ့မေးပါမယ်။ Environment BOT_TOKEN ထည့်ပြီးသား hosting မှာတော့ token ပြန်မတောင်းပါ။ Pydroid 3 မှာ `fetch_emoji.py` ကိုဖွင့်ပြီး Run လုပ်နိုင်ပါတယ်။ pip dependency မလိုပါ။ Script က getStickerSet ကိုသာခေါ်ပြီး Telegram message မပို့ပါ။
+Webhook ပြန်ချိတ်ရန်သာ လိုပါက `python bot.py --connect` ကို သုံးပါ။ Hosting supervisor ကို bot-hosting.net ၏ Linux container မှာ run ပါ။
 
-List ပြန်ကြည့်ချင်ရင်:
+## စမ်းသပ်ရန်
 
-```sh
-python fetch_emoji.py --offline
-```
-
-Pack အသစ်အတွက် packs.json မှာ name, key, purpose, default, fallback ထည့်ပြီး script ပြန် run ပါ။ Role အသစ်ကို ကိုကို approve ပြီးမှ emoji_roles.json ထဲထည့်ပါ။ Helper code ပြောင်းဖို့မလိုပါ။
-
-## Existing project ထဲအသုံးပြုပုံ
-
-Cloudflare: `lib/emoji.ts` က safe `e(role)` helper ဖြစ်ပြီး `lib/telegram.ts` က Rich → HTML custom emoji → HTML normal fallback အဆင့်လိုက်ပို့ပါတယ်။ `/start`, services/order flow, owner notifications နဲ့ Hosting worker message တွေအတွက် ချိတ်ထားပါတယ်။ `sendRichMessage` က `rich_message.html` သုံးပြီး `sendMessage` fallback က `parse_mode=HTML` သုံးပါတယ်။ User text ကို escape လုပ်ပါတယ်။
-
-Button မှာ tag မထည့်ပါ။ API ရဲ့ `icon_custom_emoji_id` သာသုံးပါတယ်။ `style` က primary / success / danger သာရပြီး Telegram theme က အရောင်ပြပါတယ်။ Custom purple hex ကို native inline button မှာ မသတ်မှတ်နိုင်ပါ။ ကိုကို့ button-icon request အတိုင်း icon support ဖွင့်ထားပေမယ့် WORK default မရွေးခင် custom icon မပေါ်သေးပါ။
-
-Owner ရဲ့ Telegram Premium eligibility လိုအပ်ပါတယ်။ Normal fallback က unsupported rendering/notifications စတဲ့နေရာတွေအတွက်ပါ။ Non-Premium viewer အားလုံးကို custom emoji မမြင်ရဘူးလို့ မယူဆပါနှင့်။
-
-Hosting upload prompt ကို plain text အတိုင်းထားပါတယ်။ လက်ရှိ authenticated reply-to-upload flow က exact prompt ကိုစစ်တာကြောင့် ဖြစ်ပါတယ်။
-
-## Deploy / tests
-
-ဒီ ZIP ထဲက Cloudflare files ကို bot-hosting.net မှာ run မလုပ်ပါနှင့်။ Source repo branch မှာ ပြင်ဆင်ထားပြီး role/default ရွေးချယ်ပြီးမှ production update တင်ရပါမယ်။ Python Hosting side အတွက် `emoji_helpers.py`, `emoji/` နဲ့ updated `hosting/__main__.py` ကို အတူတင်ရပါမယ်။ Existing `k9-hosting-data/` ကို ထိန်းထားပါ။
-
-ရွေးချယ်ပြီးနောက် test list:
-
-1. Customer account `/start`: welcome CATS custom emoji၊ Mini App button အလုပ်လုပ်မှု။
-2. `/services`, order review, confirmation: WORK emoji နဲ့ callback မပျက်မှု။
-3. Owner order notification: Rich table နဲ့ Approve / Processing / Done colored controls။
-4. Hosting menu/cards: WORK icon; upload prompt reply နဲ့ project upload ဆက်အလုပ်လုပ်မှု။
-5. Missing role/ID: normal fallback ရပြီး raw ID မပေါ်မှု။
-6. User input `<`, `>`, `&`: HTML tag အဖြစ်မဖြစ်ဘဲ စာသားအတိုင်းပေါ်မှု။
-7. Rich/custom presentation API က 400 ပြန်ရင် fallback path ပေါ်မှု။ Network/permission failure အားလုံးကို success လို့ဖုံးမထားပါ။
-
-Role ရွေးရန်: CATS default, WORK default, NEWS default နဲ့ approved role 7 ခုအတွက် pack + index ပေးပါ။ Default နဲ့တူမယ့် role တွေကို "default" လို့ရေးနိုင်ပါတယ်။
+- `/emojitest` → Premium emoji / rich heading / button icon မြင်ရမည်။
+- `/addemoji order` → WORK emoji ပို့ → `/emojis` တွင် ID string သိမ်းထားရမည်။
+- Emoji မတိုင်မီ စာ၊ အခြား emoji ပါသည့် message မှလည်း UTF-16 offsets မှန်စွာ ဖတ်နိုင်ရမည်။
+- CATS role အတွက် WORK emoji ပို့လျှင် မသိမ်းရ။
+- Owner မဟုတ်သူ `/addemoji`, `/emojis`, `/delemoji`, `/emojitest` အသုံးမပြုနိုင်ရ။
+- Restart ပြီး `/emojitest` ထပ်စမ်းလျှင် ရွေးထားသော emoji မပျောက်ရ။
+- Customer `/start` → service → order → owner notification / status edit သည် Rich Message နဲ့ ဖြစ်ရမည်။
+- Hosting menu / project card တွင် emoji နဲ့ color buttons ပါရမည်။

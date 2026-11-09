@@ -3,21 +3,21 @@
     "key": "CATS",
     "name": "Whitecuteslove_by_TgEmojis_bot",
     "purpose": "warm, friendly messages",
-    "default": null,
+    "default": "CATS:5816935188365581592",
     "fallback": "🐱"
   },
   {
     "key": "WORK",
     "name": "TranslucentPack",
     "purpose": "business and service",
-    "default": null,
+    "default": "WORK:5278613311858959074",
     "fallback": "💼"
   },
   {
     "key": "NEWS",
     "name": "NewsEmoji",
     "purpose": "announcements and updates",
-    "default": null,
+    "default": "NEWS:5424818078833715060",
     "fallback": "📣"
   }
 ]

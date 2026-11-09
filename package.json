@@ -9,7 +9,7 @@
     "dev": "vinext dev",
     "build": "node scripts/build-cloudflare.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types scripts/test-production-readiness.mjs && node scripts/test-telegram-auth.mjs && node --experimental-strip-types scripts/test-order-policy.mjs && node scripts/test-cloudflare-setup.mjs && node --experimental-strip-types scripts/test-telegram-launch.mjs && node --experimental-strip-types scripts/test-mini-order-draft.mjs && node --experimental-strip-types scripts/test-emoji.mjs",
+    "test": "node --experimental-strip-types scripts/test-production-readiness.mjs && node scripts/test-telegram-auth.mjs && node --experimental-strip-types scripts/test-order-policy.mjs && node scripts/test-cloudflare-setup.mjs && node --experimental-strip-types scripts/test-telegram-launch.mjs && node --experimental-strip-types scripts/test-mini-order-draft.mjs && node --experimental-strip-types scripts/test-emoji.mjs && node --experimental-strip-types scripts/test-emoji-delivery.mjs",
     "test:api": "node scripts/test-order-api.mjs && node scripts/test-connection-unconfigured.mjs",
     "db:migrate": "wrangler d1 migrations apply DB --remote --config wrangler.jsonc",
     "deploy": "node scripts/deploy-cloudflare.mjs",
