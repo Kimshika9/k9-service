@@ -1,0 +1,2366 @@
+{
+  "version": 1,
+  "emojis": [
+    {
+      "key": "CATS:5816935188365581592",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 1,
+      "fallback": "😊",
+      "custom_emoji_id": "5816935188365581592",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816952290925353534",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 2,
+      "fallback": "😊",
+      "custom_emoji_id": "5816952290925353534",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816924459537276786",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 3,
+      "fallback": "😊",
+      "custom_emoji_id": "5816924459537276786",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816945461927354995",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 4,
+      "fallback": "😊",
+      "custom_emoji_id": "5816945461927354995",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816617412325284833",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 5,
+      "fallback": "😊",
+      "custom_emoji_id": "5816617412325284833",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816640248666399321",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 6,
+      "fallback": "😊",
+      "custom_emoji_id": "5816640248666399321",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5819014309019130945",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 7,
+      "fallback": "😊",
+      "custom_emoji_id": "5819014309019130945",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816487906176410090",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 8,
+      "fallback": "😊",
+      "custom_emoji_id": "5816487906176410090",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816656152930294364",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 9,
+      "fallback": "😊",
+      "custom_emoji_id": "5816656152930294364",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816949009570341382",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 10,
+      "fallback": "😊",
+      "custom_emoji_id": "5816949009570341382",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5818721984955032681",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 11,
+      "fallback": "😊",
+      "custom_emoji_id": "5818721984955032681",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816749426735062340",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 12,
+      "fallback": "😊",
+      "custom_emoji_id": "5816749426735062340",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816479780098285252",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 13,
+      "fallback": "😊",
+      "custom_emoji_id": "5816479780098285252",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5818782973490634333",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 14,
+      "fallback": "😊",
+      "custom_emoji_id": "5818782973490634333",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816900596698980013",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 15,
+      "fallback": "😊",
+      "custom_emoji_id": "5816900596698980013",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5819094474583711380",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 16,
+      "fallback": "😊",
+      "custom_emoji_id": "5819094474583711380",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816926241948705128",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 17,
+      "fallback": "😊",
+      "custom_emoji_id": "5816926241948705128",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816518293070027882",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 18,
+      "fallback": "😊",
+      "custom_emoji_id": "5816518293070027882",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5819142784375857660",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 19,
+      "fallback": "😊",
+      "custom_emoji_id": "5819142784375857660",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816933676537093352",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 20,
+      "fallback": "😊",
+      "custom_emoji_id": "5816933676537093352",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5819071569523121625",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 21,
+      "fallback": "😊",
+      "custom_emoji_id": "5819071569523121625",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5818711969091297507",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 22,
+      "fallback": "😊",
+      "custom_emoji_id": "5818711969091297507",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816953308832603059",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 23,
+      "fallback": "😊",
+      "custom_emoji_id": "5816953308832603059",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5819025046437373160",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 24,
+      "fallback": "😊",
+      "custom_emoji_id": "5819025046437373160",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816823562165560289",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 25,
+      "fallback": "😊",
+      "custom_emoji_id": "5816823562165560289",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5818910821782133762",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 26,
+      "fallback": "😊",
+      "custom_emoji_id": "5818910821782133762",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816438797520346497",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 27,
+      "fallback": "😊",
+      "custom_emoji_id": "5816438797520346497",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816817630815723867",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 28,
+      "fallback": "😊",
+      "custom_emoji_id": "5816817630815723867",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5818681638032252239",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 29,
+      "fallback": "😊",
+      "custom_emoji_id": "5818681638032252239",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816759167720889683",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 30,
+      "fallback": "😊",
+      "custom_emoji_id": "5816759167720889683",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816870033711701429",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 31,
+      "fallback": "😊",
+      "custom_emoji_id": "5816870033711701429",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5818804109024697505",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 32,
+      "fallback": "😊",
+      "custom_emoji_id": "5818804109024697505",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816738199690551096",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 33,
+      "fallback": "😊",
+      "custom_emoji_id": "5816738199690551096",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5818737837679319954",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 34,
+      "fallback": "😊",
+      "custom_emoji_id": "5818737837679319954",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5818958229631147414",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 35,
+      "fallback": "😊",
+      "custom_emoji_id": "5818958229631147414",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5818660485318319226",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 36,
+      "fallback": "😊",
+      "custom_emoji_id": "5818660485318319226",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816442134709934809",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 37,
+      "fallback": "😊",
+      "custom_emoji_id": "5816442134709934809",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5816803225495411879",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 38,
+      "fallback": "😊",
+      "custom_emoji_id": "5816803225495411879",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5818757323945942981",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 39,
+      "fallback": "😊",
+      "custom_emoji_id": "5818757323945942981",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "CATS:5819210838132661417",
+      "pack": "CATS",
+      "pack_name": "Whitecuteslove_by_TgEmojis_bot",
+      "index": 40,
+      "fallback": "😊",
+      "custom_emoji_id": "5819210838132661417",
+      "is_animated": false,
+      "is_video": true
+    },
+    {
+      "key": "WORK:5278611606756942667",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 1,
+      "fallback": "❤️",
+      "custom_emoji_id": "5278611606756942667",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5278227821364275264",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 2,
+      "fallback": "📁",
+      "custom_emoji_id": "5278227821364275264",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5276111746812112286",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 3,
+      "fallback": "⭐️",
+      "custom_emoji_id": "5276111746812112286",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5278602437001767574",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 4,
+      "fallback": "🔓",
+      "custom_emoji_id": "5278602437001767574",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5276262671962892944",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 5,
+      "fallback": "🛡",
+      "custom_emoji_id": "5276262671962892944",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5276240711795107620",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 6,
+      "fallback": "⚠️",
+      "custom_emoji_id": "5276240711795107620",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5278578973595427038",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 7,
+      "fallback": "🚫",
+      "custom_emoji_id": "5278578973595427038",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5278647306525108244",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 8,
+      "fallback": "🖥",
+      "custom_emoji_id": "5278647306525108244",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5278753302023004775",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 9,
+      "fallback": "ℹ️",
+      "custom_emoji_id": "5278753302023004775",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5278528159837348960",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 10,
+      "fallback": "📢",
+      "custom_emoji_id": "5278528159837348960",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5278411813468269386",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 11,
+      "fallback": "✅",
+      "custom_emoji_id": "5278411813468269386",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5278613311858959074",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 12,
+      "fallback": "🛒",
+      "custom_emoji_id": "5278613311858959074",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5276384644739129761",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 13,
+      "fallback": "🗑",
+      "custom_emoji_id": "5276384644739129761",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5276412364458059956",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 14,
+      "fallback": "🕓",
+      "custom_emoji_id": "5276412364458059956",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5276037216244624892",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 15,
+      "fallback": "💼",
+      "custom_emoji_id": "5276037216244624892",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5276395476646653290",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 16,
+      "fallback": "🔍",
+      "custom_emoji_id": "5276395476646653290",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5276442772826515132",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 17,
+      "fallback": "🎨",
+      "custom_emoji_id": "5276442772826515132",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5275979556308674886",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 18,
+      "fallback": "👤",
+      "custom_emoji_id": "5275979556308674886",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5298668674532538341",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 19,
+      "fallback": "👥️",
+      "custom_emoji_id": "5298668674532538341",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5276381204470329471",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 20,
+      "fallback": "🧑‍💻",
+      "custom_emoji_id": "5276381204470329471",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5276398496008663230",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 21,
+      "fallback": "👝",
+      "custom_emoji_id": "5276398496008663230",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5278589204207528856",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 22,
+      "fallback": "📨",
+      "custom_emoji_id": "5278589204207528856",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5276229330131772747",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 23,
+      "fallback": "👑",
+      "custom_emoji_id": "5276229330131772747",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5278540791336165644",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 24,
+      "fallback": "📦",
+      "custom_emoji_id": "5278540791336165644",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5278305362703835500",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 25,
+      "fallback": "🔗",
+      "custom_emoji_id": "5278305362703835500",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5276314275994954605",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 26,
+      "fallback": "🔨",
+      "custom_emoji_id": "5276314275994954605",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5276422526350681413",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 27,
+      "fallback": "🎁",
+      "custom_emoji_id": "5276422526350681413",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5278304890257436355",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 28,
+      "fallback": "🎮",
+      "custom_emoji_id": "5278304890257436355",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5278778882848220741",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 29,
+      "fallback": "📊",
+      "custom_emoji_id": "5278778882848220741",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5278413853577734640",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 30,
+      "fallback": "🏠",
+      "custom_emoji_id": "5278413853577734640",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5276127848644503161",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 31,
+      "fallback": "🤖",
+      "custom_emoji_id": "5276127848644503161",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5276220667182736079",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 32,
+      "fallback": "📥",
+      "custom_emoji_id": "5276220667182736079",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5206476089127372379",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 33,
+      "fallback": "⭐️",
+      "custom_emoji_id": "5206476089127372379",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5206626000665868017",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 34,
+      "fallback": "📚",
+      "custom_emoji_id": "5206626000665868017",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5206401524200145033",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 35,
+      "fallback": "🔼",
+      "custom_emoji_id": "5206401524200145033",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5206510891247371052",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 36,
+      "fallback": "🔽",
+      "custom_emoji_id": "5206510891247371052",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5206702193385700709",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 37,
+      "fallback": "📦",
+      "custom_emoji_id": "5206702193385700709",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5206211858444354221",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 38,
+      "fallback": "🧪",
+      "custom_emoji_id": "5206211858444354221",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5206202791768393003",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 39,
+      "fallback": "🧭",
+      "custom_emoji_id": "5206202791768393003",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5206222720416643915",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 40,
+      "fallback": "🔔",
+      "custom_emoji_id": "5206222720416643915",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5193179982775476271",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 41,
+      "fallback": "🪙",
+      "custom_emoji_id": "5193179982775476271",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5195107400889163662",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 42,
+      "fallback": "🪙",
+      "custom_emoji_id": "5195107400889163662",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5194983413773266305",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 43,
+      "fallback": "🪙",
+      "custom_emoji_id": "5194983413773266305",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5192942020112442148",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 44,
+      "fallback": "🪙",
+      "custom_emoji_id": "5192942020112442148",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5193059508942824703",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 45,
+      "fallback": "🪙",
+      "custom_emoji_id": "5193059508942824703",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5193004361562745352",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 46,
+      "fallback": "🪙",
+      "custom_emoji_id": "5193004361562745352",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5195352119535755156",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 47,
+      "fallback": "🪙",
+      "custom_emoji_id": "5195352119535755156",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5192685687874280710",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 48,
+      "fallback": "🪙",
+      "custom_emoji_id": "5192685687874280710",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5193144965907110821",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 49,
+      "fallback": "🪙",
+      "custom_emoji_id": "5193144965907110821",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5193131612853789713",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 50,
+      "fallback": "🪙",
+      "custom_emoji_id": "5193131612853789713",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5193193288584158951",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 51,
+      "fallback": "🪙",
+      "custom_emoji_id": "5193193288584158951",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5192993061503787796",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 52,
+      "fallback": "🪙",
+      "custom_emoji_id": "5192993061503787796",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5194921050848124927",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 53,
+      "fallback": "🪙",
+      "custom_emoji_id": "5194921050848124927",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5192731845887810383",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 54,
+      "fallback": "🪙",
+      "custom_emoji_id": "5192731845887810383",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5217914179742098180",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 55,
+      "fallback": "🪙",
+      "custom_emoji_id": "5217914179742098180",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5269289762493063742",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 56,
+      "fallback": "🪙",
+      "custom_emoji_id": "5269289762493063742",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5192689390136089826",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 57,
+      "fallback": "🏦",
+      "custom_emoji_id": "5192689390136089826",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5194996633682600894",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 58,
+      "fallback": "🏦",
+      "custom_emoji_id": "5194996633682600894",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5192751963514625238",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 59,
+      "fallback": "🏦",
+      "custom_emoji_id": "5192751963514625238",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5193115240438455906",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 60,
+      "fallback": "🏦",
+      "custom_emoji_id": "5193115240438455906",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5195058841988914267",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 61,
+      "fallback": "🏦",
+      "custom_emoji_id": "5195058841988914267",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5194955350456953187",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 62,
+      "fallback": "🏦",
+      "custom_emoji_id": "5194955350456953187",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5195018795713847457",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 63,
+      "fallback": "🏦",
+      "custom_emoji_id": "5195018795713847457",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5192661099186512001",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 64,
+      "fallback": "🏦",
+      "custom_emoji_id": "5192661099186512001",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242644275014951846",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 65,
+      "fallback": "🏦",
+      "custom_emoji_id": "5242644275014951846",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242631901214171852",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 66,
+      "fallback": "🏦",
+      "custom_emoji_id": "5242631901214171852",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5192734006256360392",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 67,
+      "fallback": "🏦",
+      "custom_emoji_id": "5192734006256360392",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5193134679460437736",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 68,
+      "fallback": "🏦",
+      "custom_emoji_id": "5193134679460437736",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5193084514242421738",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 69,
+      "fallback": "🏦",
+      "custom_emoji_id": "5193084514242421738",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5195206313985991273",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 70,
+      "fallback": "🏦",
+      "custom_emoji_id": "5195206313985991273",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5192803468762441581",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 71,
+      "fallback": "🏦",
+      "custom_emoji_id": "5192803468762441581",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5192678313415434135",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 72,
+      "fallback": "🏦",
+      "custom_emoji_id": "5192678313415434135",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242380641332393116",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 73,
+      "fallback": "0️⃣",
+      "custom_emoji_id": "5242380641332393116",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5244961448525848230",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 74,
+      "fallback": "1️⃣",
+      "custom_emoji_id": "5244961448525848230",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242293676834579345",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 75,
+      "fallback": "2️⃣",
+      "custom_emoji_id": "5242293676834579345",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242652525647127686",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 76,
+      "fallback": "3️⃣",
+      "custom_emoji_id": "5242652525647127686",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242287453426969423",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 77,
+      "fallback": "4️⃣",
+      "custom_emoji_id": "5242287453426969423",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242407832770340528",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 78,
+      "fallback": "5️⃣",
+      "custom_emoji_id": "5242407832770340528",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242669447818277073",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 79,
+      "fallback": "6️⃣",
+      "custom_emoji_id": "5242669447818277073",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242663134216350272",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 80,
+      "fallback": "7️⃣",
+      "custom_emoji_id": "5242663134216350272",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242497782270418294",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 81,
+      "fallback": "8️⃣",
+      "custom_emoji_id": "5242497782270418294",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242286371095211663",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 82,
+      "fallback": "9️⃣",
+      "custom_emoji_id": "5242286371095211663",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242329690135356589",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 83,
+      "fallback": "➕",
+      "custom_emoji_id": "5242329690135356589",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5244796895443838315",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 84,
+      "fallback": "➖",
+      "custom_emoji_id": "5244796895443838315",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242612543796567211",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 85,
+      "fallback": "⭐️",
+      "custom_emoji_id": "5242612543796567211",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242578970037218790",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 86,
+      "fallback": "❕",
+      "custom_emoji_id": "5242578970037218790",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242205011529719330",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 87,
+      "fallback": "❔",
+      "custom_emoji_id": "5242205011529719330",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5242602592357345985",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 88,
+      "fallback": "🔤",
+      "custom_emoji_id": "5242602592357345985",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5255933397750014894",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 89,
+      "fallback": "💱",
+      "custom_emoji_id": "5255933397750014894",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5256008271914885402",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 90,
+      "fallback": "💱",
+      "custom_emoji_id": "5256008271914885402",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5255806447106679302",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 91,
+      "fallback": "💱",
+      "custom_emoji_id": "5255806447106679302",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5255845368100317401",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 92,
+      "fallback": "💱",
+      "custom_emoji_id": "5255845368100317401",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5258157739837779860",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 93,
+      "fallback": "💱",
+      "custom_emoji_id": "5258157739837779860",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5256030713119007739",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 94,
+      "fallback": "💱",
+      "custom_emoji_id": "5256030713119007739",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5255828733691981585",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 95,
+      "fallback": "💱",
+      "custom_emoji_id": "5255828733691981585",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "WORK:5255787742524103649",
+      "pack": "WORK",
+      "pack_name": "TranslucentPack",
+      "index": 96,
+      "fallback": "💱",
+      "custom_emoji_id": "5255787742524103649",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5210956306952758910",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 1,
+      "fallback": "👀",
+      "custom_emoji_id": "5210956306952758910",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5461117441612462242",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 2,
+      "fallback": "🙂",
+      "custom_emoji_id": "5461117441612462242",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5456140674028019486",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 3,
+      "fallback": "⚡️",
+      "custom_emoji_id": "5456140674028019486",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5224607267797606837",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 4,
+      "fallback": "☄️",
+      "custom_emoji_id": "5224607267797606837",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5229064374403998351",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 5,
+      "fallback": "🛍",
+      "custom_emoji_id": "5229064374403998351",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5260293700088511294",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 6,
+      "fallback": "⛔️",
+      "custom_emoji_id": "5260293700088511294",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5240241223632954241",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 7,
+      "fallback": "🚫",
+      "custom_emoji_id": "5240241223632954241",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5274099962655816924",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 8,
+      "fallback": "❗️",
+      "custom_emoji_id": "5274099962655816924",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5440660757194744323",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 9,
+      "fallback": "‼️",
+      "custom_emoji_id": "5440660757194744323",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5314504236132747481",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 10,
+      "fallback": "⁉️",
+      "custom_emoji_id": "5314504236132747481",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5436113877181941026",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 11,
+      "fallback": "❓",
+      "custom_emoji_id": "5436113877181941026",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5447644880824181073",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 12,
+      "fallback": "⚠️",
+      "custom_emoji_id": "5447644880824181073",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5420323339723881652",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 13,
+      "fallback": "⚠️",
+      "custom_emoji_id": "5420323339723881652",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5447410659077661506",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 14,
+      "fallback": "🌐",
+      "custom_emoji_id": "5447410659077661506",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5443038326535759644",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 15,
+      "fallback": "💬",
+      "custom_emoji_id": "5443038326535759644",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5467538555158943525",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 16,
+      "fallback": "💭",
+      "custom_emoji_id": "5467538555158943525",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5452069934089641166",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 17,
+      "fallback": "❓",
+      "custom_emoji_id": "5452069934089641166",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5231200819986047254",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 18,
+      "fallback": "📊",
+      "custom_emoji_id": "5231200819986047254",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5449683594425410231",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 19,
+      "fallback": "🔼",
+      "custom_emoji_id": "5449683594425410231",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5447183459602669338",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 20,
+      "fallback": "🔽",
+      "custom_emoji_id": "5447183459602669338",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5451882707875276247",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 21,
+      "fallback": "🕯",
+      "custom_emoji_id": "5451882707875276247",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5244837092042750681",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 22,
+      "fallback": "📈",
+      "custom_emoji_id": "5244837092042750681",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5246762912428603768",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 23,
+      "fallback": "📉",
+      "custom_emoji_id": "5246762912428603768",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5206607081334906820",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 24,
+      "fallback": "✔️",
+      "custom_emoji_id": "5206607081334906820",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5210952531676504517",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 25,
+      "fallback": "❌",
+      "custom_emoji_id": "5210952531676504517",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5222079954421818267",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 26,
+      "fallback": "🆒",
+      "custom_emoji_id": "5222079954421818267",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5458603043203327669",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 27,
+      "fallback": "🔔",
+      "custom_emoji_id": "5458603043203327669",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5391112412445288650",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 28,
+      "fallback": "🥸",
+      "custom_emoji_id": "5391112412445288650",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5269531045165816230",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 29,
+      "fallback": "🤡",
+      "custom_emoji_id": "5269531045165816230",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5395444514028529554",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 30,
+      "fallback": "🫦",
+      "custom_emoji_id": "5395444514028529554",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5397782960512444700",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 31,
+      "fallback": "📌",
+      "custom_emoji_id": "5397782960512444700",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5409048419211682843",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 32,
+      "fallback": "💵",
+      "custom_emoji_id": "5409048419211682843",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5233326571099534068",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 33,
+      "fallback": "💸",
+      "custom_emoji_id": "5233326571099534068",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5231449120635370684",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 34,
+      "fallback": "💸",
+      "custom_emoji_id": "5231449120635370684",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5278751923338490157",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 35,
+      "fallback": "💸",
+      "custom_emoji_id": "5278751923338490157",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5290017777174722330",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 36,
+      "fallback": "💸",
+      "custom_emoji_id": "5290017777174722330",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5231005931550030290",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 37,
+      "fallback": "💸",
+      "custom_emoji_id": "5231005931550030290",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5402186569006210455",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 38,
+      "fallback": "💱",
+      "custom_emoji_id": "5402186569006210455",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5264919878082509254",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 39,
+      "fallback": "▶️",
+      "custom_emoji_id": "5264919878082509254",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5411225014148014586",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 40,
+      "fallback": "🔴",
+      "custom_emoji_id": "5411225014148014586",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5416081784641168838",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 41,
+      "fallback": "🟢",
+      "custom_emoji_id": "5416081784641168838",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5416117059207572332",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 42,
+      "fallback": "➡️",
+      "custom_emoji_id": "5416117059207572332",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5424972470023104089",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 43,
+      "fallback": "🔥",
+      "custom_emoji_id": "5424972470023104089",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5276032951342088188",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 44,
+      "fallback": "💥",
+      "custom_emoji_id": "5276032951342088188",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5294339927318739359",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 45,
+      "fallback": "🎙",
+      "custom_emoji_id": "5294339927318739359",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5224736245665511429",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 46,
+      "fallback": "🎤",
+      "custom_emoji_id": "5224736245665511429",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5424818078833715060",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 47,
+      "fallback": "📣",
+      "custom_emoji_id": "5424818078833715060",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5431609822288033666",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 48,
+      "fallback": "🤫",
+      "custom_emoji_id": "5431609822288033666",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5449875686837726134",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 49,
+      "fallback": "👎",
+      "custom_emoji_id": "5449875686837726134",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5460795800101594035",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 50,
+      "fallback": "🗣️",
+      "custom_emoji_id": "5460795800101594035",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5231012545799666522",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 51,
+      "fallback": "🔍",
+      "custom_emoji_id": "5231012545799666522",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5251203410396458957",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 52,
+      "fallback": "🛡",
+      "custom_emoji_id": "5251203410396458957",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5271604874419647061",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 53,
+      "fallback": "🔗",
+      "custom_emoji_id": "5271604874419647061",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5282843764451195532",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 54,
+      "fallback": "🖥",
+      "custom_emoji_id": "5282843764451195532",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5323442290708985472",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 55,
+      "fallback": "©",
+      "custom_emoji_id": "5323442290708985472",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5334544901428229844",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 56,
+      "fallback": "ℹ️",
+      "custom_emoji_id": "5334544901428229844",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5337080053119336309",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 57,
+      "fallback": "👍",
+      "custom_emoji_id": "5337080053119336309",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5348125953090403204",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 58,
+      "fallback": "▶️",
+      "custom_emoji_id": "5348125953090403204",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5359543311897998264",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 59,
+      "fallback": "⏸",
+      "custom_emoji_id": "5359543311897998264",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5341498088408234504",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 60,
+      "fallback": "💯",
+      "custom_emoji_id": "5341498088408234504",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5375338737028841420",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 61,
+      "fallback": "🔄",
+      "custom_emoji_id": "5375338737028841420",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5415655814079723871",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 62,
+      "fallback": "🔝",
+      "custom_emoji_id": "5415655814079723871",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5382357040008021292",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 63,
+      "fallback": "🆕",
+      "custom_emoji_id": "5382357040008021292",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5440621591387980068",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 64,
+      "fallback": "🔜",
+      "custom_emoji_id": "5440621591387980068",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5391032818111363540",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 65,
+      "fallback": "📍",
+      "custom_emoji_id": "5391032818111363540",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5397916757333654639",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 66,
+      "fallback": "➕",
+      "custom_emoji_id": "5397916757333654639",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5427168083074628963",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 67,
+      "fallback": "💎",
+      "custom_emoji_id": "5427168083074628963",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5438496463044752972",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 68,
+      "fallback": "⭐️",
+      "custom_emoji_id": "5438496463044752972",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5325547803936572038",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 69,
+      "fallback": "✨",
+      "custom_emoji_id": "5325547803936572038",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5217822164362739968",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 70,
+      "fallback": "👑",
+      "custom_emoji_id": "5217822164362739968",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5445267414562389170",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 71,
+      "fallback": "🗑",
+      "custom_emoji_id": "5445267414562389170",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5222444124698853913",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 72,
+      "fallback": "🔖",
+      "custom_emoji_id": "5222444124698853913",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5253742260054409879",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 73,
+      "fallback": "✉️",
+      "custom_emoji_id": "5253742260054409879",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5296369303661067030",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 74,
+      "fallback": "🔒",
+      "custom_emoji_id": "5296369303661067030",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5303479226882603449",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 75,
+      "fallback": "😮",
+      "custom_emoji_id": "5303479226882603449",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5305265301917549162",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 76,
+      "fallback": "📎",
+      "custom_emoji_id": "5305265301917549162",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5341715473882955310",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 77,
+      "fallback": "⚙️",
+      "custom_emoji_id": "5341715473882955310",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5361741454685256344",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 78,
+      "fallback": "🎮",
+      "custom_emoji_id": "5361741454685256344",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5388632425314140043",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 79,
+      "fallback": "🔈",
+      "custom_emoji_id": "5388632425314140043",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5386367538735104399",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 80,
+      "fallback": "⌛",
+      "custom_emoji_id": "5386367538735104399",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5406745015365943482",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 81,
+      "fallback": "⬇️",
+      "custom_emoji_id": "5406745015365943482",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5402477260982731644",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 82,
+      "fallback": "☀️",
+      "custom_emoji_id": "5402477260982731644",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5399913388845322366",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 83,
+      "fallback": "🌧",
+      "custom_emoji_id": "5399913388845322366",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5449569374065152798",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 84,
+      "fallback": "🌛",
+      "custom_emoji_id": "5449569374065152798",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5449449325434266744",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 85,
+      "fallback": "❄️",
+      "custom_emoji_id": "5449449325434266744",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5409109841538994759",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 86,
+      "fallback": "🌈",
+      "custom_emoji_id": "5409109841538994759",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5393512611968995988",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 87,
+      "fallback": "💧",
+      "custom_emoji_id": "5393512611968995988",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5413879192267805083",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 88,
+      "fallback": "🗓",
+      "custom_emoji_id": "5413879192267805083",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5422439311196834318",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 89,
+      "fallback": "💡",
+      "custom_emoji_id": "5422439311196834318",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5440539497383087970",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 90,
+      "fallback": "🥇",
+      "custom_emoji_id": "5440539497383087970",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5447203607294265305",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 91,
+      "fallback": "🥈",
+      "custom_emoji_id": "5447203607294265305",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5453902265922376865",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 92,
+      "fallback": "🥉",
+      "custom_emoji_id": "5453902265922376865",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5463107823946717464",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 93,
+      "fallback": "🎵",
+      "custom_emoji_id": "5463107823946717464",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5406756500108501710",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 94,
+      "fallback": "🆓",
+      "custom_emoji_id": "5406756500108501710",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5395444784611480792",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 95,
+      "fallback": "✏️",
+      "custom_emoji_id": "5395444784611480792",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5395695537687123235",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 96,
+      "fallback": "🚨",
+      "custom_emoji_id": "5395695537687123235",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5406683434124859552",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 97,
+      "fallback": "🛍",
+      "custom_emoji_id": "5406683434124859552",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5416041192905265756",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 98,
+      "fallback": "🏠",
+      "custom_emoji_id": "5416041192905265756",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5460755126761312667",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 99,
+      "fallback": "🚩",
+      "custom_emoji_id": "5460755126761312667",
+      "is_animated": true,
+      "is_video": false
+    },
+    {
+      "key": "NEWS:5461151367559141950",
+      "pack": "NEWS",
+      "pack_name": "NewsEmoji",
+      "index": 100,
+      "fallback": "🎉",
+      "custom_emoji_id": "5461151367559141950",
+      "is_animated": true,
+      "is_video": false
+    }
+  ],
+  "errors": []
+}

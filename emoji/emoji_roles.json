@@ -1,37 +1,37 @@
 {
   "thanks": {
     "pack": "CATS",
-    "emoji": null,
-    "fallback": "🐱"
+    "emoji": "CATS:5816952290925353534",
+    "fallback": "😊"
   },
   "welcome": {
     "pack": "CATS",
-    "emoji": null,
-    "fallback": "🐱"
+    "emoji": "CATS:5816935188365581592",
+    "fallback": "😊"
   },
   "chat": {
     "pack": "CATS",
-    "emoji": null,
-    "fallback": "🐱"
+    "emoji": "CATS:5816924459537276786",
+    "fallback": "😊"
   },
   "order": {
     "pack": "WORK",
-    "emoji": null,
-    "fallback": "💼"
+    "emoji": "WORK:5278613311858959074",
+    "fallback": "🛒"
   },
   "price": {
     "pack": "WORK",
-    "emoji": null,
-    "fallback": "💰"
+    "emoji": "WORK:5193179982775476271",
+    "fallback": "🪙"
   },
   "payment": {
     "pack": "WORK",
-    "emoji": null,
-    "fallback": "💳"
+    "emoji": "WORK:5192689390136089826",
+    "fallback": "🏦"
   },
   "announcement": {
     "pack": "NEWS",
-    "emoji": null,
+    "emoji": "NEWS:5424818078833715060",
     "fallback": "📣"
   }
 }

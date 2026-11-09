@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { hostingEnabled } from '../../../../lib/hosting';
 import { json, runtime } from '../../../../lib/server';
+import {loadEmojiRoles} from '../../../../lib/emoji-manager';
 
 const leaseDuration = 10 * 60 * 1000;
 const maxJobAge = 15 * 60 * 1000;
@@ -26,6 +27,7 @@ export async function POST(request: Request) {
  if (!env.OWNER_TELEGRAM_ID || body.ownerId !== env.OWNER_TELEGRAM_ID) return json({ error: 'Owner mismatch' }, 409);
 
  try {
+  if (body.op === 'emojis') return json({roles:await loadEmojiRoles()});
   if (body.op === 'check') {
    await db.prepare('SELECT id, payload, created_at, lease_until, lease FROM hosting_jobs LIMIT 0').run();
    return json({ ok: true });

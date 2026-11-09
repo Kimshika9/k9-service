@@ -9,7 +9,7 @@ assert.equal(tools.e('welcome'),'<tg-emoji emoji-id="10001">🐱</tg-emoji>');
 assert.equal(tools.e('order'),'<tg-emoji emoji-id="10002">💼</tg-emoji>');
 assert.equal(tools.e('welcome','WORK'),'<tg-emoji emoji-id="10002">💼</tg-emoji>');
 assert.equal(emojiTools(packs,roles,[]).e('welcome'),'🐱');
-assert.equal(tools.e('new-unapproved-role'),'<tg-emoji emoji-id="10001">🐱</tg-emoji>');
+assert.equal(tools.e('new-unapproved-role'),'🐱');
 assert.equal(tools.e('welcome',undefined,false),'🐱');
 assert.equal(htmlEscape('<script>&"\''),'&lt;script&gt;&amp;&quot;&#39;');
 const input={inline_keyboard:[[{text:'Approve',callback_data:'status:id:approve'}],[{text:'Cancel',callback_data:'cancel'}]]};

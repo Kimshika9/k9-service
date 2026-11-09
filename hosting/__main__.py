@@ -19,7 +19,7 @@ from urllib.parse import quote
 from urllib.request import urlopen
 
 from bot import ConnectionError, load_config, request_json, telegram, validate, website_check
-from emoji_helpers import e, buttons as style_buttons, config as emoji_config
+from emoji_manager import EmojiManager
 from .managed import BotHosting
 from .local import Local
 from .projects import Docker, MAX_UPLOAD, ProjectError, Projects, RUNTIMES
@@ -46,49 +46,29 @@ class HostingWorker:
         return request_json(self.config['SITE_URL'] + '/api/hosting/queue',
                             {'op': operation, 'ownerId': str(self.owner), **fields}, {'x-k9-hosting-secret': self.secret}, timeout=20)
 
-    def send(self, text: str, rows: list | None = None, *, rich: bool = False) -> dict:
-        body = {'chat_id': self.owner, 'text': e('order', 'WORK') + ' ' + escape(text, quote=False), 'parse_mode': 'HTML'}
-        if rows is not None:
-            body['reply_markup'] = {'inline_keyboard': style_buttons(rows)}
-        if emoji_config('presentation.json', {}).get('rich_messages', True):
-            try:
-                return telegram(self.config, 'sendRichMessage', {
-                    'chat_id': self.owner,
-                    'rich_message': {'html': '<p>' + e('order', 'WORK') + '</p><h2>K9 Hosting</h2><p>' + escape(text).replace('\n', '<br>') + '</p>'},
-                    'reply_markup': body.get('reply_markup'),
-                })
-            except ConnectionError as exc:
-                if exc.code != 400:
-                    raise
-        try:
-            return telegram(self.config, 'sendMessage', body)
-        except ConnectionError as exc:
-            if exc.code != 400:
-                raise
-            body['text'] = e('order', 'WORK', custom=False) + ' ' + escape(text, quote=False)
-            if rows is not None:
-                body['reply_markup'] = {'inline_keyboard': style_buttons(rows, custom=False)}
-            return telegram(self.config, 'sendMessage', body)
+    def send(self, text: str, rows: list | None = None, *, rich: bool = True) -> dict:
+        roles = self.queue('emojis')['roles']
+        return EmojiManager(roles).send(self.config, self.owner, text, rows=rows, rich=rich)
 
     def menu(self) -> dict:
         return {'text': 'Upload and manage your bot projects.', 'rich': True,
-                'rows': [[button('➕ Upload project', 'upload'), button('📂 My projects', 'list')],
-                         [button('◀ Owner menu', 'exit')]]}
+                'rows': [[button('Upload project', 'upload'), button('My projects', 'list')],
+                         [button('Owner menu', 'exit')]]}
 
     def card(self, project: dict, notice: str = '') -> dict:
         pid = project['id']
         if project['entry'] is None:
             return self.choices(project, 0)
         status = self.runtime.state(project)
-        controls = [[button('▶ Start', f'start:{pid}'), button('■ Stop', f'stop:{pid}'),
-                     button('↻ Restart', f'restart:{pid}')]]
+        controls = [[button('Start', f'start:{pid}'), button('Stop', f'stop:{pid}'),
+                     button('Restart', f'restart:{pid}')]]
         if self.managed and not project.get('managed_staged') or self.local and not project.get('local_prepared'):
             controls = [[button('Prepare runtime' if self.local else 'Stage deployment', f'stage:{pid}')]]
         return {'text': '\n'.join(filter(None, [notice, project['name'], 'Project ID  ' + pid,
                          f"Entry  {project['entry']}", f"Status  {status}"])),
                 'rows': controls + [[button('Logs', f'logs:{pid}'), button('Refresh', f'view:{pid}'),
                           button('Delete…', f'confirm:{pid}')],
-                         [button('◀ My projects', 'list')]]}
+                         [button('My projects', 'list')]]}
 
     def choices(self, project: dict, page: int) -> dict:
         pid = project['id']
@@ -98,12 +78,12 @@ class HostingWorker:
                 for index in range(page * 8, min(page * 8 + 8, len(entries)))]
         navigation = []
         if page:
-            navigation.append(button('◀ Previous', f'choices:{pid}:{page - 1}'))
+            navigation.append(button('Previous', f'choices:{pid}:{page - 1}'))
         if (page + 1) * 8 < len(entries):
-            navigation.append(button('Next ▶', f'choices:{pid}:{page + 1}'))
+            navigation.append(button('Next', f'choices:{pid}:{page + 1}'))
         if navigation:
             rows.append(navigation)
-        rows.append([button('◀ My projects', 'list'), button('Delete…', f'confirm:{pid}')])
+        rows.append([button('My projects', 'list'), button('Delete…', f'confirm:{pid}')])
         return {'text': f"{project['name']}\nSelect the startup file.", 'rows': rows}
 
     def upload(self, job_id: int, file: dict) -> dict:
@@ -157,14 +137,14 @@ class HostingWorker:
         if action == 'exit':
             return {'text': 'K9 Owner Control', 'rows': [
                 [{'text': 'Open Owner Page', 'web_app': {'url': self.config['SITE_URL'] + '/owner'}}],
-                [button('🖥 Hosting', 'menu')]]}
+                [button('Hosting', 'menu')]]}
         if action == 'upload':
             return {'prompt': True}
         if action == 'list':
             projects = self.projects.list()
             return {'text': f'Hosted projects  ·  {len(projects)}',
                     'rows': [[button(p['name'], 'view:' + p['id'])] for p in projects]
-                            + [[button('➕ Upload', 'upload'), button('◀ Hosting', 'menu')]]}
+                            + [[button('Upload', 'upload'), button('Hosting', 'menu')]]}
         if not args:
             raise ProjectError('This button is no longer available.')
         project = self.projects.get(args[0])
@@ -184,9 +164,9 @@ class HostingWorker:
             raise ProjectError('This button is no longer available.')
         result = self.runtime.action(project, action)
         if action == 'delete':
-            return {'text': result, 'rows': [[button('◀ My projects', 'list')]]}
+            return {'text': result, 'rows': [[button('My projects', 'list')]]}
         if action == 'logs':
-            return {'text': result, 'rows': [[button('◀ Back', f'view:{pid}')]]}
+            return {'text': result, 'rows': [[button('Back', f'view:{pid}')]]}
         return self.card(project, result)
 
     def process(self, job: dict) -> None:
@@ -196,7 +176,7 @@ class HostingWorker:
             try:
                 reply = self.handle(job_id, job['payload'])
             except ProjectError as exc:
-                reply = {'text': str(exc), 'rows': [[button('◀ Hosting', 'menu')]]}
+                reply = {'text': str(exc), 'rows': [[button('Hosting', 'menu')]]}
             except ConnectionError as exc:
                 if exc.code in {0, 429} or exc.code >= 500:
                     raise
@@ -213,9 +193,9 @@ class HostingWorker:
             reply = json.loads(row[0])
         try:
             if reply.get('prompt'):
-                telegram(self.config, 'sendMessage', {'chat_id': self.owner,
-                         'text': 'K9 Hosting · Reply here with a .py, .js or .zip document (up to 20 MB).',
-                         'reply_markup': {'force_reply': True}})
+                EmojiManager(self.queue('emojis')['roles']).send(self.config, self.owner,
+                         'K9 Hosting · Reply here with a .py, .js or .zip document (up to 20 MB).',
+                         rich=False, prefix=False, reply_markup={'force_reply': True})
             else:
                 self.send(**reply)
         except ConnectionError as exc:

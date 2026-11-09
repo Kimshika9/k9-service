@@ -20,5 +20,6 @@ jobs:
       - run: python3 scripts/test_bot.py
       - run: python3 scripts/test_hosting.py
       - run: python3 scripts/test_local_hosting.py
+      - run: python3 scripts/test_emoji_manager.py
       - run: pnpm build
       - run: pnpm test:api

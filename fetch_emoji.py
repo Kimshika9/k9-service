@@ -37,7 +37,7 @@ def main():
     args = parser.parse_args()
     root = Path(args.config_dir).resolve()
     packs = json.loads((root / 'packs.json').read_text())
-    cached_path = root / 'emoji_ids.json'
+    cached_path = root / 'emoji_catalog.json'
     cached = json.loads(cached_path.read_text()) if cached_path.exists() else {'emojis': []}
     errors, rows = [], []
     if args.offline:
@@ -79,7 +79,7 @@ def main():
     text = '\n'.join(lines) + '\n'
     (root / 'emoji_list.txt').write_text(text, encoding='utf-8')
     print(text)
-    print('Saved emoji_ids.json and emoji_list.txt. No roles or pack defaults were selected.')
+    print('Saved emoji_catalog.json and emoji_list.txt. No roles or pack defaults were selected.')
     return 1 if errors else 0
 
 
