@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
-import {cloudflare,exportDatabase,requireIsolatedDatabase} from './release-cloudflare.mjs';
+import {cloudflare,exportDatabase,requireIsolatedDatabase,importIsolatedDatabase} from './release-cloudflare.mjs';
 import {inspectRelease} from './release-preflight.mjs';
 
 const execute=promisify(execFile);
@@ -28,15 +28,25 @@ try {
  try {
   const stamp=new Date().toISOString().replace(/\D/g,'').slice(0,14);
   const bookmark=await api(`d1/database/${preflight.databaseId}/time_travel/bookmark`,{label:'rollback bookmark'});
-  backup=await api('d1/database',{method:'POST',label:'isolated backup creation',body:{name:`k9-service-backup-${stamp}`}});
-  const backupId=requireIsolatedDatabase(preflight.databaseId,backup);
-  console.log('Created a private backup database in the same Cloudflare account.');
   const first=await exportDatabase(api,preflight.databaseId);
   const original=path.join(privateDirectory,'production.sql');
   await download(first.url,original);
-  const config=path.join(privateDirectory,'wrangler.json');
-  await fs.writeFile(config,JSON.stringify({name:'k9-private-backup',account_id:credentials.accountId,d1_databases:[{binding:'DB',database_name:backup.name,database_id:backupId}]}),{mode:0o600});
-  await command(process.execPath,['node_modules/wrangler/bin/wrangler.js','d1','execute','DB','--remote','--config',config,'--file',original,'--yes'],'Private backup import');
+  const databases=await api('d1/database?per_page=100',{label:'private backup resource lookup'});
+  const existing=databases.filter(d=>/^k9-service-backup-[0-9]+$/.test(d.name)).sort((a,b)=>b.name.localeCompare(a.name))[0];
+  let importRequired=true;
+  if(existing) {
+   requireIsolatedDatabase(preflight.databaseId,existing);
+   const tables=await api(`d1/database/${existing.uuid}/query`,{method:'POST',label:'backup state inspection',body:{sql:"SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'"}});
+   if(tables[0]?.results?.[0]?.n===0)backup=existing;
+   else {
+    const candidate=path.join(privateDirectory,'candidate.sql');
+    await download((await exportDatabase(api,existing.uuid)).url,candidate);
+    try{await command('python3',['scripts/release-verify-export.py',original,candidate],'Existing backup comparison');backup=existing;importRequired=false;}catch{ /* Preserve older backup; create a fresh private snapshot. */ }
+   }
+  }
+  backup??=await api('d1/database',{method:'POST',label:'isolated backup creation',body:{name:`k9-service-backup-${stamp}`}});
+  const backupId=requireIsolatedDatabase(preflight.databaseId,backup);
+  if(importRequired)await importIsolatedDatabase(api,preflight.databaseId,backup,await fs.readFile(original));
   const restoredExport=await exportDatabase(api,backupId);
   const restored=path.join(privateDirectory,'restored.sql');
   await download(restoredExport.url,restored);
@@ -46,7 +56,7 @@ try {
   const report={...preflight,stage:'private-backup-verified',backupDatabaseId:backupId,backupDatabaseName:backup.name,backupCreatedAt:new Date().toISOString(),
    timeTravelBookmark:bookmark.bookmark??first.bookmark,restoreVerified:true,tablesVerified:verified.tablesVerified,productionMutated:false};
   await fs.writeFile(path.join(directory,'backup.json'),JSON.stringify(report,null,2)+'\n',{mode:0o600});
-  console.log(JSON.stringify({stage:report.stage,backupDatabaseName:backup.name,restoreVerified:true,tablesVerified:verified.tablesVerified,productionMutated:false}));
+  console.log(JSON.stringify({stage:report.stage,backupDatabaseName:backup.name,restoreVerified:true,tablesVerified:verified.tablesVerified,reusedUnchangedBackup:!importRequired,productionMutated:false}));
  }finally{
   // Raw SQL is never sent to GitHub artifacts, logs or repository files.
   await fs.rm(privateDirectory,{recursive:true,force:true});

@@ -48,6 +48,7 @@ jobs:
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: node scripts/test-release-cloudflare.mjs
+      - run: node --experimental-strip-types scripts/test-release-preview.mjs
       - run: pnpm test
       - run: pnpm typecheck
       - name: Python regression tests
@@ -65,10 +66,18 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           K9_RELEASE_REPORT_DIR: ${{ runner.temp }}/k9-release-report
         run: node scripts/release-backup.mjs
+      - name: Verify the isolated Worker and a private owner Widget
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          K9_RELEASE_REPORT_DIR: ${{ runner.temp }}/k9-release-report
+        run: node --experimental-strip-types scripts/release-stage.mjs
       - name: Preserve safe backup metadata only
         uses: actions/upload-artifact@v4
         with:
           name: k9-release-backup-metadata
-          path: ${{ runner.temp }}/k9-release-report/backup.json
+          path: |
+            ${{ runner.temp }}/k9-release-report/backup.json
+            ${{ runner.temp }}/k9-release-report/staging.json
           retention-days: 7
           if-no-files-found: error

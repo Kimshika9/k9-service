@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import {cloudflare,exportDatabase,requireIsolatedDatabase} from './release-cloudflare.mjs';
+import {cloudflare,exportDatabase,requireIsolatedDatabase,importIsolatedDatabase} from './release-cloudflare.mjs';
+import {createHash} from 'node:crypto';
 const credentials={token:'private-synthetic-token',accountId:'1'.repeat(32)};
 const id='00000000-0000-4000-8000-000000000001';
 assert.throws(()=>requireIsolatedDatabase(id,{uuid:id,name:'k9-service-backup-20261110'}),/Refusing/);
@@ -13,3 +14,8 @@ assert.ok(calls.every(c=>c.method==='POST'&&c.route===`d1/database/${id}/export`
 await assert.rejects(()=>exportDatabase(async()=>({status:'error',error:credentials.token}),id),error=>!error.message.includes(credentials.token));
 await assert.rejects(()=>exportDatabase(async()=>({status:'complete',result:{signed_url:'http://insecure.invalid'}}),id),/valid download/);
 console.log('Release isolation, Cloudflare error redaction and private export polling passed.');
+const sql=Buffer.from('CREATE TABLE synthetic(id INTEGER);'),etag=createHash('md5').update(sql).digest('hex'),imports=[];
+await importIsolatedDatabase(async(route,options)=>{imports.push({route,...options});return imports.length===1?{upload_url:'https://example.invalid/private',filename:'private-file'}:{status:'complete',success:true};},id,{uuid:id.replace(/1$/,'2'),name:'k9-service-backup-20261110'},sql,{request:async(url,options)=>{assert.deepEqual(options.body,sql);assert.equal(options.method,'PUT');return new Response(null,{headers:{etag:`"${etag}"`}});}});
+assert.equal(imports[0].body.etag,etag);assert.equal(imports[1].body.action,'ingest');
+await assert.rejects(()=>importIsolatedDatabase(async()=>{throw Error('must not execute');},id,{uuid:id,name:'k9-service-backup-20261110'},sql),/Refusing/);
+console.log('Private import: isolated target, signed upload, MD5 verification and ingestion passed.');
