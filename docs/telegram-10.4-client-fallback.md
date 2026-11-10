@@ -65,11 +65,38 @@ Automated Telegram calls use a stub; they are not live Telegram evidence.
 
 ## Release and remaining limits
 
-The controlled release must export and privately restore-verify production D1,
-verify the separate staging database, preserve protected bindings, apply only
-the additive migration, record the active rollback Worker and verify actual
-owner/hosting Widget **and companion** references before declaring success.
-Deployment and post-release client evidence will be appended after execution.
+Controlled release [42821322052](https://github.com/Kimshika9/k9-service/actions/runs/42821322052)
+completed successfully at 13:07 UTC. Application source:
+`77fb53d22adec6d321e75c0a04278b4452e99c18`. Verified Worker version:
+`eb3301db-3222-4296-9ae6-43a8f85c9bdd`, 100% traffic. Immediate rollback:
+`686b82d3-28ba-4bf6-90e9-89455652c598` (earlier Widget-enabled implementation).
+The previously verified Widget-disabled rollback remains available as documented
+in the release runbook.
+
+The workflow privately export/restore-verified 14 tables in
+`k9-service-backup-20261110130623`, reused the separate empty staging D1,
+verified a real private owner Widget send/edit, preserved all eight production
+bindings and applied only `0005_crazy_electro.sql`. Live owner and hosting command
+probes persisted both a Widget and a conventional companion. Three independent
+live observations returned website/assets/health 200, signed owner access 200,
+unauthenticated/wrong-secret access 401, hosting queue 200, all three webhook
+subscriptions present, zero pending updates and no delivery error. Raw exports
+and preview credentials were excluded from artifacts; only
+[safe metadata](https://github.com/Kimshika9/k9-service/actions/runs/42821322052/artifacts/13767067196)
+was retained.
+
+After deployment, a real owner `/widgets` command in Telegram Web A displayed
+the readable summary and its controls. Clicking Refresh retained the same
+message and unchanged card count. The companion's **Open Owner Dashboard**
+button launched the existing authenticated Mini App; the owner heading and
+order search were visible. No real order action or payment decision was taken.
+An actual `/hostingstatus` command also displayed its readable companion. Its
+Refresh retained the same message and card count; with no verified heartbeat,
+runtime, observation time and counts correctly remained Unknown.
+
+Release build measurements: client JS/CSS 28 files / 1,364,327 raw bytes;
+server JS/CSS 97 files / 1,921,227 raw bytes; unchanged largest scene JS 555,131
+raw / 138,481 gzip bytes. These are file sizes, not first-page transfer size.
 
 Telegram Web A cannot exercise Widget sandbox JavaScript or generate a real
 Widget query. Android Widget rendering, native Premium Emoji animation and a

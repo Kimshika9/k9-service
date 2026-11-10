@@ -1,5 +1,12 @@
 # K9 Service Center — Bot API 10.4 deployment
 
+Latest follow-up: the readable-client fallback was deployed and verified at
+13:07 UTC on 10 November 2026. It adds a conventional companion because Telegram
+Web A hides Widget captions/buttons. The owner Refresh and authenticated Mini
+App launch were then exercised in the real chat. See the [follow-up report](telegram-10.4-client-fallback.md)
+for current release/rollback versions, additive migration 0005 and actual tests.
+The original release record below remains historical evidence.
+
 Deployed and verified on 10 November 2026, 05:21 UTC. This report supersedes the earlier local-only status in the audit and implementation history.
 
 - Website: https://k9-service.kimshikano.workers.dev/
