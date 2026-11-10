@@ -30,18 +30,29 @@ jobs:
           import {setTimeout as pause} from 'node:timers/promises';
           import {inspectRelease} from './scripts/release-preflight.mjs';
           import {publicProbe} from './scripts/release-public-probe.mjs';
+          import {cloudflare} from './scripts/release-cloudflare.mjs';
+          const credentials={token:process.env.CLOUDFLARE_API_TOKEN,accountId:process.env.CLOUDFLARE_ACCOUNT_ID};
           const observations=[];
           for(let i=0;i<3;i++){
             if(i)await pause(10000);
-            const metadata=await inspectRelease({token:process.env.CLOUDFLARE_API_TOKEN,accountId:process.env.CLOUDFLARE_ACCOUNT_ID});
+            const metadata=await inspectRelease(credentials);
             const checks=await publicProbe();
-            if(!metadata.widgetsEnabled||checks.rootStatus!==200||checks.assetStatus!==200||checks.healthStatus!==200||!checks.health?.ready||checks.health.checks?.widgets!==true||checks.unauthorizedStatus!==401)throw new Error('Post-main production readiness verification failed.');
-            observations.push({productionVersions:metadata.productionVersions,widgetsEnabled:metadata.widgetsEnabled,checks});
+            const observation={productionVersions:metadata.productionVersions,widgetsEnabled:metadata.widgetsEnabled,checks};
+            observations.push(observation);
+            if(!metadata.widgetsEnabled||checks.rootStatus!==200||checks.assetStatus!==200||checks.healthStatus!==200||!checks.health?.ready||checks.health.checks?.widgets!==true||checks.unauthorizedStatus!==401)throw new Error('Post-main production readiness verification failed: '+JSON.stringify(observation));
           }
+          // Read coarse recorded health only. Never claim/ack jobs, synthesize a
+          // heartbeat, expose owner IDs or read project names/secrets/logs.
+          const metadata=await inspectRelease(credentials),api=cloudflare(credentials);
+          const result=await api(`d1/database/${metadata.databaseId}/query`,{method:'POST',label:'read-only hosting observation',body:{sql:'SELECT runtime,projects,running,unknown,received_at FROM hosting_health ORDER BY received_at DESC LIMIT 1'}});
+          const row=result[0]?.results?.[0],received=Number(row?.received_at),age=Date.now()-received;
+          const counts=row?Object.fromEntries(['projects','running','unknown'].map(key=>[key,Number.isSafeInteger(row[key])&&row[key]>=0?row[key]:null])):{};
+          const valid=row&&['local','docker','bot-hosting'].includes(row.runtime)&&Object.values(counts).every(value=>value!==null)&&counts.running+counts.unknown<=counts.projects;
+          const hostingObservation=row?{recorded:true,runtime:valid?row.runtime:'unknown',...counts,observedAt:Number.isFinite(received)?new Date(received).toISOString():null,fresh:!!valid&&age>=0&&age<=120000}:{recorded:false};
           const directory=process.env.K9_RELEASE_REPORT_DIR;
           await fs.mkdir(directory,{recursive:true,mode:0o700});
-          await fs.writeFile(path.join(directory,'post-main.json'),JSON.stringify({source:process.env.GITHUB_SHA,observations},null,2),{mode:0o600});
-          console.log(JSON.stringify({source:process.env.GITHUB_SHA,observations},null,2));
+          await fs.writeFile(path.join(directory,'post-main.json'),JSON.stringify({source:process.env.GITHUB_SHA,observations,hostingObservation},null,2),{mode:0o600});
+          console.log(JSON.stringify({source:process.env.GITHUB_SHA,observations,hostingObservation},null,2));
           NODE
       - uses: actions/upload-artifact@v4
         with:

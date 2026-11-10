@@ -138,3 +138,12 @@ No provider API key or separate child deployment is needed in this mode.
 
 The earlier paid managed adapter is still available via `K9_HOSTING_RUNTIME=bot-hosting`;
 see [Managed two-deployment setup (MM)](MANAGED_STARTER_SETUP_MM.md).
+
+Optional recorded runtime health: use the current `hosting/__main__.py` in the
+existing hosting deployment and set `K9_HOSTING_HEARTBEAT=1` in that deployment's
+environment, then restart it through the existing panel. Keep its current data
+directory and credentials. The reporter samples actual project states at most
+every 30 seconds; `/hostingstatus` reads those observations from D1. After two
+minutes without a fresh observation, current running counts become unknown.
+This reports the supervisor's process observations, not a child bot's Telegram
+response or an uptime guarantee. See the [verified readiness follow-up](docs/production-readiness-followup.md).

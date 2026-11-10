@@ -68,16 +68,56 @@ JS/CSS 99 files / 1,924,370 raw bytes. Largest scene JS remains 555,131 raw /
 
 ## Hosting inspection and release status
 
-The existing Bot-Hosting account session is available. Its **k9-service-worker**
-deployment is Running in the provider panel; this alone does not establish a
-fresh runtime heartbeat or prove any child bot is healthy. Runtime files and
-the opt-in reporter are being checked before any hosting change.
+The controlled release [42827443791](https://github.com/Kimshika9/k9-service/actions/runs/42827443791)
+passed with application source `a737f2032ed677c5f1c38466d87665b722ebcaa5`.
+It verified and activated Worker `840adc08-6730-4f91-b27c-c46012d46a54` at
+100%. Immediate code rollback: `691ddb32-fd91-41ec-9118-0b34ab00931d`;
+source rollback: `710c9ce12684771ff0b3c679048c5f49aac76f50`.
+The workflow privately export/restore-verified 14 tables in
+`k9-service-backup-20261110134647`, verified the existing separate staging D1
+and real owner-only Widget send/edit, preserved all eight production bindings,
+and found **no pending migrations**. Three live checks returned website/assets/
+health 200, signed owner access 200, unauthenticated/wrong-secret access 401,
+hosting queue 200, all three update subscriptions, zero pending updates and
+no Telegram delivery error. No production restore/drop or secret rotation ran.
 
-Production source changes must pass the existing private backup/restore,
-isolated staging and controlled release before traffic switches. The previously
-verified source above and active Worker version are retained as rollback.
-No database restore/drop or secret rotation is part of this maintenance.
-Live release and hosting evidence will be appended after verification.
+Release build measurements: client JS/CSS 28 files / 1,364,912 raw bytes;
+server JS/CSS 99 files / 1,924,278 raw bytes; largest scene unchanged at
+555,131 raw / 138,481 gzip bytes. Normal main-branch builds can create another
+Worker version from the same application source; the post-main report records
+the actual version serving traffic after that build.
+
+The separate existing **k9-service-worker** deployment was inspected in its
+already authenticated Bot-Hosting panel. Its `hosting/__main__.py` lacked the
+reporter. A downloaded backup matched repository baseline
+`984d06b565f1079d006614d32f330b304567ecd0` byte for byte (SHA-256
+`60f91a077508a7e616d8b66373c92420020667021f05f0e1a2f5e060a83fbbbf`).
+Only that file was uploaded from the already tested repository version. A new
+download matched the replacement bytes exactly (SHA-256
+`92115911d70afb24318b16acd1ded36f715e3975d3804a6aed654be007f56e1c`).
+The only environment addition was non-secret `K9_HOSTING_HEARTBEAT=1`.
+The existing deployment was restarted. No child source, project data directory,
+credential, startup path, infrastructure or other K9 project was changed.
+
+An actual owner `/hostingstatus` command then displayed runtime **local**,
+**1 recorded project / 1 observed running / 0 unknown**, with a fresh database
+observation at **20:24:05 Asia/Yangon (13:54:05 UTC), 10 November 2026**.
+That is an actual supervisor observation, not a synthetic test heartbeat,
+child-bot response check or uptime promise. The post-main observer now also
+reads only these coarse recorded D1 fields and reports freshness; it never
+creates a heartbeat or claims/acknowledges a hosting job. Its diagnostic failure
+message includes sanitized status/health checks rather than hiding which check
+failed. Runtime health remains separate from website readiness.
+
+After activation, browser checks confirmed six customer catalog options,
+English/Myanmar navigation and the sign-in gate on My Orders. The actual
+Telegram companion's dashboard button opened the authenticated Owner Mini App
+and the Customer Orders heading was visible. No real order, payment or receipt
+was created or changed for these checks.
+
+Hosting rollback: restore only `hosting/__main__.py` from the baseline commit
+above, unset the opt-in flag and restart the same deployment. Keep all project
+data. Worker rollback similarly retains D1 and all additive tables/columns.
 
 Android Widget sandbox rendering and an actual device-generated Widget query
 remain device acceptance items. Telegram Web A's conventional companion and
