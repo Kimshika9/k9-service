@@ -28,6 +28,11 @@ try {
  const sends=calls.filter(c=>c.method==='sendWidget');assert.equal(sends.length,1);assert.equal(sends[0].body.chat_id,env.OWNER_TELEGRAM_ID);
  assert.equal(sends[0].body.allow_queries,false);assert.equal(sends[0].body.protect_content,true);
  assert.ok(calls.some(c=>c.method==='editMessageWidgetData'));
+ const liveCommands=[];
+ env.K9_RELEASE_LIVE={async fetch(request){liveCommands.push(await request.json());return Response.json({ok:true});}};
+ assert.equal((await run('/owner-widgets-live')).status,200);
+ assert.deepEqual(liveCommands.map(u=>u.message.text),['/widgets','/hostingstatus']);
+ assert.ok(liveCommands.every(u=>u.message.from.id===90001&&u.message.chat.id===90001&&u.message.chat.type==='private'));
  webhook='https://other.invalid/webhook';assert.equal((await run('/widget-test')).status,502);
  assert.equal(calls.filter(c=>c.method==='sendWidget').length,1);
 }finally{globalThis.fetch=originalFetch;}

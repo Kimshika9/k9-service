@@ -57,6 +57,20 @@ export function previewHandler(app,widget) {
      const after=await telegram('getWebhookInfo',{});
      return Response.json({urlMatches:after.url===before.url,subscriptionsReady:['message','callback_query','widget_query'].every(t=>after.allowed_updates?.includes(t)),pendingUpdates:after.pending_update_count??0,hasDeliveryError:!!after.last_error_message});
     }
+    if(operation==='/owner-widgets-live') {
+     const id=Number(env.OWNER_TELEGRAM_ID);
+     if(!Number.isSafeInteger(id)||id<1)throw new Error('Owner identity is invalid.');
+     const stamp=Date.now()*1000+crypto.getRandomValues(new Uint16Array(1))[0]%1000;
+     const statuses=[];
+     for(const [index,text] of ['/widgets','/hostingstatus'].entries()) {
+      // Synthetic release probes enter only the read-only owner Widget commands.
+      // No customer order, receipt, status action or Hosting Queue job is created.
+      const update={update_id:stamp+index,message:{message_id:1,from:{id,is_bot:false,first_name:'Release probe'},chat:{id,type:'private'},text}};
+      const response=await env.K9_RELEASE_LIVE.fetch(new Request(site+'/api/telegram/webhook',{method:'POST',headers:{'Content-Type':'application/json','x-telegram-bot-api-secret-token':env.TELEGRAM_WEBHOOK_SECRET},body:JSON.stringify(update)}));
+      statuses.push(response.status);
+     }
+     return Response.json({ownerCommandStatus:statuses[0],hostingCommandStatus:statuses[1],syntheticReleaseProbe:true});
+    }
     if(operation==='/verify-live') {
      async function live(route,options={}) {
       probeStage=route;

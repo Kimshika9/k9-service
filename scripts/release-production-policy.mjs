@@ -11,8 +11,8 @@ export function preservedBindings(settings,databaseId) {
   throw new Error('Refusing to change the existing production DB binding.');
  if(list.some(b=>b.name.startsWith('K9_RELEASE_')))throw new Error('A test-only binding unexpectedly exists on production.');
  const bindings=list.filter(b=>b.name!=='K9_WIDGETS_ENABLED').map(b=>b.name==='DB'?{name:b.name,type:'d1',id:databaseId}:b.type==='assets'?{name:b.name,type:'assets'}:{name:b.name,type:'inherit'});
- // Release compatibility code first. Customer Widgets await visual Android QA.
- bindings.push({name:'K9_WIDGETS_ENABLED',type:'plain_text',text:'0'});
+ // Enable only after isolated staging and the real private-chat API tests pass.
+ bindings.push({name:'K9_WIDGETS_ENABLED',type:'plain_text',text:'1'});
  return bindings;
 }
 export function liveHealthy(checks) {

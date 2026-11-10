@@ -57,7 +57,7 @@ try {
  const bound=version.resources?.bindings;
  if(!Array.isArray(bound)||settings.bindings.some(before=>!bound.some(b=>b.name===before.name&&b.type===before.type))||
     !bound.some(b=>b.name==='DB'&&b.type==='d1'&&b.id===current.databaseId)||
-    !bound.some(b=>b.name==='K9_WIDGETS_ENABLED'&&b.type==='plain_text'&&b.text==='0'))throw new Error('Candidate bindings do not preserve the production resources. No traffic was changed.');
+    !bound.some(b=>b.name==='K9_WIDGETS_ENABLED'&&b.type==='plain_text'&&b.text==='1'))throw new Error('Candidate bindings do not preserve the production resources. No traffic was changed.');
  const history=await api(`d1/database/${current.databaseId}/query`,{method:'POST',label:'migration history inspection',body:{sql:'SELECT name FROM d1_migrations ORDER BY id'}});
  const applied=new Set(history[0]?.results?.map(r=>r.name));
  const migrations=(await fs.readdir('drizzle')).filter(f=>f.endsWith('.sql')).sort();
@@ -74,19 +74,26 @@ try {
  const beforeTraffic=await inspectRelease(credentials);
  if(JSON.stringify(beforeTraffic.productionVersions)!==JSON.stringify(current.productionVersions))throw new Error('Another deployment changed production during this release.');
  const startedAt=Math.floor(Date.now()/1000);
- await traffic(uploaded,`K9 API 10.4 verified compatibility release; rollback ${rollback}`);deployed=true;
+ await traffic(uploaded,`K9 API 10.4 verified Widget release; rollback ${rollback}`);deployed=true;
+ await pause(1500);
  const connection=await previewCheck('/connect');
  if(!connection.urlMatches||!connection.subscriptionsReady)throw new Error('Telegram did not retain the required webhook subscriptions.');
+ const probeSince=Date.now();
+ const ownerWidgets=await previewCheck('/owner-widgets-live');
+ if(ownerWidgets.ownerCommandStatus!==200||ownerWidgets.hostingCommandStatus!==200)throw new Error('Live owner Widget command routing failed.');
+ const widgetRows=await api(`d1/database/${current.databaseId}/query`,{method:'POST',label:'private Widget reference verification',body:{sql:"SELECT kind,COUNT(*) AS n FROM telegram_widget_messages WHERE kind IN ('owner','hosting') AND active=1 AND created_at>=? GROUP BY kind",params:[String(probeSince-30000)]}});
+ const sentKinds=new Set((widgetRows[0]?.results??[]).filter(r=>r.n>0).map(r=>r.kind));
+ if(!sentKinds.has('owner')||!sentKinds.has('hosting'))throw new Error('Live owner Widget delivery was not persisted. Restore the previous release.');
  const observations=[];
  for(let attempt=0;attempt<3;attempt++) {
   if(attempt)await pause(5000);
   const observation={...await previewCheck('/verify-live'),...await publicProbe()};observations.push(observation);
-  if(!liveHealthy(observation)||observation.lastErrorAt>=startedAt)throw new Error(`Live release verification failed: ${JSON.stringify(observation)}`);
+  if(!liveHealthy(observation)||observation.health?.checks?.widgets!==true||observation.lastErrorAt>=startedAt)throw new Error(`Live release verification failed: ${JSON.stringify(observation)}`);
  }
  const after=await inspectRelease(credentials);
  if(after.productionVersions.length!==1||after.productionVersions[0].id!==uploaded||after.productionVersions[0].percentage!==100)throw new Error('The new Worker is not serving 100% of production traffic.');
- report={stage:'production-compatibility-deployed',commit:process.env.GITHUB_SHA,worker:'k9-service',versionId:uploaded,rollbackVersionId:rollback,databaseId:current.databaseId,
-  backupDatabaseName:backup.backupDatabaseName,migrationsApplied:pending,connection,observations,widgetsEnabled:false,widgetActivation:'pending real-client visual acceptance',hostingRuntimeChanged:false,buildMetrics:metrics,bindingsPreserved:settings.bindings.map(b=>({name:b.name,type:b.type}))};
+ report={stage:'production-api104-deployed',commit:process.env.GITHUB_SHA,worker:'k9-service',versionId:uploaded,rollbackVersionId:rollback,databaseId:current.databaseId,
+  backupDatabaseName:backup.backupDatabaseName,migrationsApplied:pending,connection,observations,widgetsEnabled:true,widgetActivation:'active',realClientVisualReview:'not verified on device',ownerWidgetCommands:ownerWidgets,hostingRuntimeChanged:false,buildMetrics:metrics,bindingsPreserved:settings.bindings.map(b=>({name:b.name,type:b.type}))};
  await fs.writeFile(path.join(directory,'deployment.json'),JSON.stringify(report,null,2)+'\n',{mode:0o600});
  console.log(JSON.stringify(report,null,2));
 }catch(error){
