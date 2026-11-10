@@ -4,6 +4,7 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {setTimeout as pause} from 'node:timers/promises';
 import {cloudflare} from './release-cloudflare.mjs';
+import {publicProbe,buildMetrics} from './release-public-probe.mjs';
 import {inspectRelease} from './release-preflight.mjs';
 import {assertProductionGate,preservedBindings,liveHealthy} from './release-production-policy.mjs';
 
@@ -30,12 +31,17 @@ try {
   let response,data;try{response=await fetch(preview.host+route,{method:'POST',headers:{Authorization:`Bearer ${preview.key}`,'cf-workers-preview-token':preview.token},signal:AbortSignal.timeout(90000)});data=await response.json();}
   catch{throw new Error('Private live verification could not be reached.');}
   if(!response.ok){
-   const detail=typeof data.error==='string'&&/^Telegram \w+ failed with code \d+\.$/.test(data.error)?' '+data.error:'';
+   const reason=typeof data.error==='string'&&/^Telegram \w+ failed with code \d+\.$/.test(data.error)?' '+data.error:'';
+   const stage=typeof data.stage==='string'&&/^[/a-z-]+$/.test(data.stage)?data.stage:'unknown';
+   const detail=reason+' stage='+stage+'; type='+(data.errorType==='invalid-json'?'invalid-json':'upstream');
    throw new Error(`Private live verification ${route} returned HTTP ${response.status}.${detail}`);
   }
   return data;
  }
- const baseline=await previewCheck('/verify-live');
+ const metrics=await buildMetrics();console.log(JSON.stringify({stage:'build-metrics',metrics}));
+ const routing=await api('workers/scripts/k9-service/subdomain',{label:'public Worker routing inspection'});
+ console.log(JSON.stringify({stage:'public-routing',workersDevEnabled:routing.enabled,versionUrlsEnabled:routing.previews_enabled}));
+ const baseline={...await previewCheck('/verify-live'),...await publicProbe()};
  console.log(JSON.stringify({stage:'live-baseline',checks:baseline}));
  if(baseline.rootStatus!==200||baseline.healthStatus!==200||baseline.ownerStatus!==200)throw new Error('Existing production readiness must be reviewed before another deployment.');
  const settings=await api('workers/scripts/k9-service/settings',{label:'binding preservation inspection'});
@@ -74,13 +80,13 @@ try {
  const observations=[];
  for(let attempt=0;attempt<3;attempt++) {
   if(attempt)await pause(5000);
-  const observation=await previewCheck('/verify-live');observations.push(observation);
+  const observation={...await previewCheck('/verify-live'),...await publicProbe()};observations.push(observation);
   if(!liveHealthy(observation)||observation.lastErrorAt>=startedAt)throw new Error(`Live release verification failed: ${JSON.stringify(observation)}`);
  }
  const after=await inspectRelease(credentials);
  if(after.productionVersions.length!==1||after.productionVersions[0].id!==uploaded||after.productionVersions[0].percentage!==100)throw new Error('The new Worker is not serving 100% of production traffic.');
  report={stage:'production-compatibility-deployed',commit:process.env.GITHUB_SHA,worker:'k9-service',versionId:uploaded,rollbackVersionId:rollback,databaseId:current.databaseId,
-  backupDatabaseName:backup.backupDatabaseName,migrationsApplied:pending,connection,observations,widgetsEnabled:false,widgetActivation:'pending real-client visual acceptance',hostingRuntimeChanged:false,bindingsPreserved:settings.bindings.map(b=>({name:b.name,type:b.type}))};
+  backupDatabaseName:backup.backupDatabaseName,migrationsApplied:pending,connection,observations,widgetsEnabled:false,widgetActivation:'pending real-client visual acceptance',hostingRuntimeChanged:false,buildMetrics:metrics,bindingsPreserved:settings.bindings.map(b=>({name:b.name,type:b.type}))};
  await fs.writeFile(path.join(directory,'deployment.json'),JSON.stringify(report,null,2)+'\n',{mode:0o600});
  console.log(JSON.stringify(report,null,2));
 }catch(error){

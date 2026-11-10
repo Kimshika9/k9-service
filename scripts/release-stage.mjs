@@ -43,8 +43,8 @@ try {
  }
  if(typeof sessionToken!=='string')throw new Error('No private edge-preview session token was returned.');
  const key=randomBytes(32).toString('hex');
- const bindings=settings.bindings.filter(b=>!['DB','K9_WIDGETS_ENABLED','K9_RELEASE_TEST_KEY','ASSETS'].includes(b.name)).map(b=>b.type==='secret_text'?{name:b.name,type:'inherit'}:b);
- bindings.push({name:'DB',type:'d1',id:stageId},{name:'K9_WIDGETS_ENABLED',type:'plain_text',text:'1'},{name:'K9_RELEASE_TEST_KEY',type:'plain_text',text:key});
+ const bindings=settings.bindings.filter(b=>!['DB','K9_WIDGETS_ENABLED','K9_RELEASE_TEST_KEY','K9_RELEASE_LIVE','ASSETS'].includes(b.name)).map(b=>b.type==='secret_text'?{name:b.name,type:'inherit'}:b);
+ bindings.push({name:'K9_RELEASE_LIVE',type:'service',service:'k9-service'},{name:'DB',type:'d1',id:stageId},{name:'K9_WIDGETS_ENABLED',type:'plain_text',text:'1'},{name:'K9_RELEASE_TEST_KEY',type:'plain_text',text:key});
  const state={v:1,r:1,name:'K9 Service Center',description:'Private staging verification',price:'—'};
  const widget={html:widgetTemplate('service','en'),caption:widgetCaption('service',state,'en'),chat_data:JSON.stringify(state)};
  const form=new FormData();

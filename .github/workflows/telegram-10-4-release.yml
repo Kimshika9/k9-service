@@ -50,6 +50,9 @@ jobs:
       - run: node scripts/test-release-cloudflare.mjs
       - run: node --experimental-strip-types scripts/test-release-preview.mjs
       - run: node scripts/test-release-production.mjs
+      - run: node scripts/test-release-public.mjs
+      - name: Lint release scripts
+        run: pnpm exec eslint scripts/release-*.mjs scripts/test-release-*.mjs
       - run: pnpm test
       - run: pnpm typecheck
       - name: Python regression tests

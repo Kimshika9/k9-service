@@ -6,6 +6,7 @@ export function previewHandler(app,widget) {
    if(request.method!=='POST'||request.headers.get('Authorization')!==`Bearer ${env.K9_RELEASE_TEST_KEY}`)
     return new Response(null,{status:404});
    const operation=new URL(request.url).pathname;
+   let probeStage=operation;
    const site='https://k9-service.kimshikano.workers.dev';
    async function telegram(method,payload) {
     let response,result;
@@ -58,7 +59,8 @@ export function previewHandler(app,widget) {
     }
     if(operation==='/verify-live') {
      async function live(route,options={}) {
-      const response=await fetch(site+route,{...options,signal:AbortSignal.timeout(15000)});
+      probeStage=route;
+      const response=await env.K9_RELEASE_LIVE.fetch(new Request(site+route,{...options,signal:AbortSignal.timeout(15000)}));
       return response;
      }
      const health=await live('/api/health'),root=await live('/');
@@ -75,7 +77,7 @@ export function previewHandler(app,widget) {
       webhookUrlMatches:info.url===site+'/api/telegram/webhook',subscriptionsReady:['message','callback_query','widget_query'].every(t=>info.allowed_updates?.includes(t)),pendingUpdates:info.pending_update_count??0,hasDeliveryError:!!info.last_error_message,lastErrorAt:info.last_error_date??null});
     }
     return new Response(null,{status:404});
-   }catch(error){return Response.json({error:error instanceof Error?error.message:'Release preview failed.'},{status:502});}
+   }catch(error){return Response.json({error:error instanceof Error?error.message:'Release preview failed.',stage:probeStage,errorType:error instanceof SyntaxError?'invalid-json':'upstream'},{status:502});}
   }
  };
 }
