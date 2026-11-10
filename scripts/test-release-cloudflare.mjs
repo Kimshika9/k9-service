@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import {cloudflare,exportDatabase,requireIsolatedDatabase,importIsolatedDatabase} from './release-cloudflare.mjs';
+import {cloudflare,exportDatabase,requireIsolatedDatabase,importIsolatedDatabase,pendingWidgetFallbackStatements} from './release-cloudflare.mjs';
+import fs from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 const credentials={token:'private-synthetic-token',accountId:'1'.repeat(32)};
 const id='00000000-0000-4000-8000-000000000001';
@@ -19,3 +20,9 @@ await importIsolatedDatabase(async(route,options)=>{imports.push({route,...optio
 assert.equal(imports[0].body.etag,etag);assert.equal(imports[1].body.action,'ingest');
 await assert.rejects(()=>importIsolatedDatabase(async()=>{throw Error('must not execute');},id,{uuid:id,name:'k9-service-backup-20261110'},sql),/Refusing/);
 console.log('Private import: isolated target, signed upload, MD5 verification and ingestion passed.');
+const fallbackSql=await fs.readFile('drizzle/0005_crazy_electro.sql','utf8');
+assert.equal(pendingWidgetFallbackStatements([],fallbackSql).length,2);
+assert.equal(pendingWidgetFallbackStatements(['fallback_message_id'],fallbackSql).length,1);
+assert.equal(pendingWidgetFallbackStatements(['fallback_message_id','widget_available'],fallbackSql).length,0);
+assert.throws(()=>pendingWidgetFallbackStatements([],'DROP TABLE orders;'),/Unexpected/);
+console.log('Staging migration: legacy/partial/current fallback schemas and unreviewed SQL rejection passed.');

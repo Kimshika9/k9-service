@@ -35,6 +35,7 @@ export const widgetMessages = sqliteTable('telegram_widget_messages', {
  chatId: text('chat_id').notNull(), messageId: integer('message_id').notNull(),
  userId: text('user_id').notNull(), kind: text('kind').notNull(), resourceId: text('resource_id').notNull().default(''),
  locale: text('locale').notNull().default('en'), templateVersion: integer('template_version').notNull().default(1),
+ fallbackMessageId: integer('fallback_message_id'), widgetAvailable: integer('widget_available').notNull().default(1),
  active: integer('active').notNull().default(1), createdAt: integer('created_at').notNull(), expiresAt: integer('expires_at').notNull(),
 }, t => [primaryKey({columns:[t.chatId,t.messageId]}), index('widget_resource_idx').on(t.kind,t.resourceId,t.active)]);
 export const widgetQueries = sqliteTable('telegram_widget_queries', {

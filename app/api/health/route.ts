@@ -30,7 +30,7 @@ export async function GET(){
   checks.widgets=false;
   if(e.DB)try{
    await e.DB.batch([
-    e.DB.prepare('SELECT chat_id,message_id,user_id,kind,resource_id,locale,template_version,active,created_at,expires_at FROM telegram_widget_messages LIMIT 0'),
+    e.DB.prepare('SELECT chat_id,message_id,user_id,kind,resource_id,locale,template_version,fallback_message_id,widget_available,active,created_at,expires_at FROM telegram_widget_messages LIMIT 0'),
     e.DB.prepare('SELECT id,update_id,user_id,created_at FROM telegram_widget_queries LIMIT 0'),
     e.DB.prepare('SELECT owner_id,runtime,projects,running,unknown,received_at FROM hosting_health LIMIT 0'),
    ]);checks.widgets=true;

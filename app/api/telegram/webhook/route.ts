@@ -27,7 +27,7 @@ if(cb)await telegram('answerCallbackQuery',{callback_query_id:cb.id});
 if(data==='emoji:preview')return json({ok:true});
 if(data==='emoji:test'){await emojiCommands(chat,isOwner,{text:'/emojitest'});return json({ok:true});}
 if(!cb&&await emojiCommands(chat,isOwner,update.message))return json({ok:true});
-if(await widgetCommand(chat,isOwner,text,data,from.language_code))return json({ok:true});
+if(await widgetCommand(chat,isOwner,text,data,from.language_code,msg.message_id))return json({ok:true});
 if(data.startsWith('status:')){if(String(from.id)!==e.OWNER_TELEGRAM_ID)return json({ok:true});const [,id,action]=data.split(':');if(!['approve','process','done'].includes(action))return json({ok:true});try{const o=await getOrder(id);const next=await ownerAction({key:'tg:'+from.id,name:from.first_name||'Owner',contact:String(from.id),telegram:chat,isOwner:true},{id,action,version:o.version});await editPresented(chat,msg.message_id,orderPlainText(next),msg.reply_markup,'order',orderRichHtml(next));if(next.telegramChat)await say(next.telegramChat,`K9 Service · ${next.serviceName}\nStatus: ${next.status}`);}catch(err){await say(chat,(err as Error).message+' Open the Owner Page to review payment and order details.');}return json({ok:true});}
 if(text==='/id'){await say(chat,'Your Telegram user ID: '+from.id+'\nUse this numeric ID as OWNER_TELEGRAM_ID only for your own owner account.');return json({ok:true});}
 if(isOwner){

@@ -9,6 +9,26 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class WidgetMigrationTests(unittest.TestCase):
+    def test_fallback_upgrade_preserves_existing_widget_and_business_rows(self):
+        connection = sqlite3.connect(':memory:')
+        self.addCleanup(connection.close)
+        migrations = sorted((ROOT / 'drizzle').glob('*.sql'))
+        for migration in migrations[:5]:
+            connection.executescript(migration.read_text())
+        connection.execute("INSERT INTO settings VALUES ('telegram.emoji.order','saved-role')")
+        connection.execute("INSERT INTO telegram_widget_messages VALUES ('90001',42,'90001','owner','','my',1,1,100,999999)")
+        connection.execute("INSERT INTO telegram_widget_queries VALUES ('query',1,'90001',100)")
+        before = connection.execute('SELECT * FROM telegram_widget_messages').fetchall()
+        upgrade = migrations[5].read_text()
+        self.assertNotRegex(upgrade.upper(), r'\b(DROP|DELETE|UPDATE|INSERT|REPLACE)\b')
+        connection.executescript(upgrade)
+        after = connection.execute('SELECT * FROM telegram_widget_messages').fetchall()
+        self.assertEqual(before, [row[:10] for row in after])
+        self.assertEqual(after[0][10:], (None, 1))
+        self.assertEqual(connection.execute('SELECT * FROM settings').fetchall(), [('telegram.emoji.order', 'saved-role')])
+        self.assertEqual(connection.execute('SELECT * FROM telegram_widget_queries').fetchall(), [('query', 1, '90001', 100)])
+        self.assertEqual(connection.execute('PRAGMA integrity_check').fetchone()[0], 'ok')
+
     def test_preserves_existing_data_and_schema(self):
         connection = sqlite3.connect(':memory:')
         self.addCleanup(connection.close)

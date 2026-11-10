@@ -62,7 +62,7 @@ try {
  const applied=new Set(history[0]?.results?.map(r=>r.name));
  const migrations=(await fs.readdir('drizzle')).filter(f=>f.endsWith('.sql')).sort();
  const pending=migrations.filter(name=>!applied.has(name));
- if(pending.some(name=>name!=='0004_nebulous_retro_girl.sql'))throw new Error('Unreviewed older production migrations are pending. Traffic was not changed.');
+ if(pending.some(name=>!['0004_nebulous_retro_girl.sql','0005_crazy_electro.sql'].includes(name)))throw new Error('Unreviewed older production migrations are pending. Traffic was not changed.');
  if(pending.length) {
   const source=JSON.parse((await fs.readFile('wrangler.jsonc','utf8')).replace(/^\s*\/\/.*$/mg,''));
   source.account_id=credentials.accountId;source.d1_databases=config.d1_databases;
@@ -70,7 +70,7 @@ try {
   await command(['d1','migrations','apply','DB','--remote','--config','wrangler.jsonc'],'Additive Widget migration');
  }
  // No native database restore is performed on release failure; keep new rows.
- await api(`d1/database/${current.databaseId}/query`,{method:'POST',label:'Widget schema verification',body:{sql:'SELECT chat_id,message_id FROM telegram_widget_messages LIMIT 0; SELECT id,update_id FROM telegram_widget_queries LIMIT 0; SELECT owner_id,received_at FROM hosting_health LIMIT 0;'}});
+ await api(`d1/database/${current.databaseId}/query`,{method:'POST',label:'Widget schema verification',body:{sql:'SELECT chat_id,message_id,fallback_message_id,widget_available FROM telegram_widget_messages LIMIT 0; SELECT id,update_id FROM telegram_widget_queries LIMIT 0; SELECT owner_id,received_at FROM hosting_health LIMIT 0;'}});
  const beforeTraffic=await inspectRelease(credentials);
  if(JSON.stringify(beforeTraffic.productionVersions)!==JSON.stringify(current.productionVersions))throw new Error('Another deployment changed production during this release.');
  const startedAt=Math.floor(Date.now()/1000);
@@ -81,9 +81,9 @@ try {
  const probeSince=Date.now();
  const ownerWidgets=await previewCheck('/owner-widgets-live');
  if(ownerWidgets.ownerCommandStatus!==200||ownerWidgets.hostingCommandStatus!==200)throw new Error('Live owner Widget command routing failed.');
- const widgetRows=await api(`d1/database/${current.databaseId}/query`,{method:'POST',label:'private Widget reference verification',body:{sql:"SELECT kind,COUNT(*) AS n FROM telegram_widget_messages WHERE kind IN ('owner','hosting') AND active=1 AND created_at>=? GROUP BY kind",params:[String(probeSince-30000)]}});
+ const widgetRows=await api(`d1/database/${current.databaseId}/query`,{method:'POST',label:'private Widget reference verification',body:{sql:"SELECT kind,COUNT(*) AS n FROM telegram_widget_messages WHERE kind IN ('owner','hosting') AND active=1 AND widget_available=1 AND fallback_message_id IS NOT NULL AND created_at>=? GROUP BY kind",params:[String(probeSince-30000)]}});
  const sentKinds=new Set((widgetRows[0]?.results??[]).filter(r=>r.n>0).map(r=>r.kind));
- if(!sentKinds.has('owner')||!sentKinds.has('hosting'))throw new Error('Live owner Widget delivery was not persisted. Restore the previous release.');
+ if(!sentKinds.has('owner')||!sentKinds.has('hosting'))throw new Error('Live owner Widget and readable companion delivery was not persisted. Restore the previous release.');
  const observations=[];
  for(let attempt=0;attempt<3;attempt++) {
   if(attempt)await pause(5000);

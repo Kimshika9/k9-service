@@ -40,6 +40,14 @@ export function requireIsolatedDatabase(production,backup) {
   throw new Error('Refusing to write to a database that is not an isolated release resource.');
  return backup.uuid;
 }
+export function pendingWidgetFallbackStatements(columns,sql) {
+ const existing=new Set(columns);
+ return sql.split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean).filter(statement=>{
+  const match=statement.match(/^ALTER TABLE `telegram_widget_messages` ADD `(fallback_message_id|widget_available)` integer(?: DEFAULT 1 NOT NULL)?;$/);
+  if(!match)throw new Error('Unexpected Widget fallback staging migration.');
+  return !existing.has(match[1]);
+ });
+}
 export async function importIsolatedDatabase(api,production,database,bytes,{request=fetch,wait=pause}={}) {
  const id=requireIsolatedDatabase(production,database),etag=createHash('md5').update(bytes).digest('hex');
  let result=await api(`d1/database/${id}/import`,{method:'POST',label:'private backup import initialization',body:{action:'init',etag}});

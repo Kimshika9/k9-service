@@ -9,7 +9,7 @@ const {Miniflare}=require(require.resolve('miniflare',{paths:[path.dirname(requi
 const root=path.resolve('dist/server'),temporary=await fs.mkdtemp(path.join(os.tmpdir(),'k9-widget-tests-'));
 const modulePaths=(await fs.readdir(root,{recursive:true})).filter(p=>/\.(m?js)$/.test(p)).sort((a,b)=>a==='index.js'?-1:b==='index.js'?1:a.localeCompare(b));
 const secret='local-widget-test-secret-not-for-production',token='12345:local-test-only-not-a-real-token';
-let messageId=1000,updateId=10000,failMethod='',failureCode=500,failureText='Private upstream failure',missingMessage=0;
+let messageId=1000,updateId=10000,failMethod='',failureCode=500,failureText='Private upstream failure',missingMessage=0,missingFallbackMessage=0;
 const calls=[];
 const options={modules:modulePaths.map(p=>({type:'ESModule',path:path.join(root,p)})),modulesRoot:root,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'widget-api-test'},d1Persist:path.join(temporary,'d1'),
  bindings:{BOT_TOKEN:token,OWNER_TELEGRAM_ID:'90001',TELEGRAM_WEBHOOK_SECRET:secret,SITE_URL:'https://example.test',K9_WIDGETS_ENABLED:'1',K9_HOSTING_SECRET:'local-test-private-hosting-queue-secret'},
@@ -17,6 +17,7 @@ const options={modules:modulePaths.map(p=>({type:'ESModule',path:path.join(root,
   const method=new URL(request.url).pathname.split('/').pop(),body=await request.json();calls.push({method,body,at:performance.now()});
   if(method===failMethod)return Response.json({ok:false,error_code:failureCode,description:failureText},{status:failureCode});
   if(method==='editMessageWidgetData'&&body.message_id===missingMessage)return Response.json({ok:false,error_code:400,description:'Bad Request: message to edit not found'},{status:400});
+  if(method==='editMessageText'&&body.message_id===missingFallbackMessage)return Response.json({ok:false,error_code:400,description:'Bad Request: message to edit not found'},{status:400});
   return Response.json({ok:true,result:method==='getMe'?{id:12345,username:'k9_test_bot'}:method==='sendWidget'?{message_id:++messageId,chat:{id:Number(body.chat_id),type:'private'},widget:{}}:method.startsWith('edit')||method==='answerWidgetQuery'?true:{message_id:++messageId}});
  }};
 let mf=new Miniflare(options),db;
@@ -24,7 +25,7 @@ const signed=id=>{const p=new URLSearchParams({auth_date:String(Math.floor(Date.
 async function request(url,method='GET',body,user){const r=await mf.dispatchFetch('https://localhost'+url,{method,headers:{'Content-Type':'application/json',...(user?{'x-telegram-init-data':signed(user)}:{})},body:body===undefined?undefined:JSON.stringify(body)});return {status:r.status,data:await r.json()};}
 async function hook(update,header=secret){const r=await mf.dispatchFetch('https://localhost/api/telegram/webhook',{method:'POST',headers:{'Content-Type':'application/json','x-telegram-bot-api-secret-token':header},body:JSON.stringify(update)});assert.equal(r.status,header===secret?200:401);return r;}
 const message=(user,text)=>({update_id:++updateId,message:{message_id:updateId,from:{id:user,is_bot:false,first_name:'Synthetic QA'},chat:{id:user,type:'private'},text}});
-const callback=(user,data)=>({update_id:++updateId,callback_query:{id:'cb'+updateId,from:{id:user,is_bot:false},message:{message_id:10,chat:{id:user,type:'private'}},data}});
+const callback=(user,data,mid=10)=>({update_id:++updateId,callback_query:{id:'cb'+updateId,from:{id:user,is_bot:false},message:{message_id:mid,chat:{id:user,type:'private'}},data}});
 const query=(user,mid,extra={})=>({update_id:++updateId,widget_query:{id:'q'+updateId,from:{id:user,is_bot:false},chat:{id:user,type:'private'},message_id:mid,chat_instance:'synthetic-chat',type:{type:'data'},data:'refresh',...extra}});
 const lastAnswer=()=>JSON.parse(calls.findLast(c=>c.method==='answerWidgetQuery').body.data);
 const stateEdit=mid=>calls.findLast(c=>c.method==='editMessageWidgetData'&&c.body.message_id===mid);
@@ -40,6 +41,8 @@ try{
  let order=await request('/api/orders','POST',{serviceId:'telegram-bot',requestId:crypto.randomUUID(),details:'Synthetic pre-migration order'},90002);
  assert.equal(order.status,201);
  await migrate(migrations[4]);
+ assert.equal((await request('/api/health')).status,503,'enabled Widgets require the readable fallback migration');
+ await migrate(migrations[5]);
  assert.equal((await request('/api/health')).data.checks.widgets,true);
  const a=await request('/api/orders','POST',{serviceId:'telegram-bot',requestId:crypto.randomUUID(),details:'Synthetic customer order'},90002);
  assert.equal(a.status,201);const alice=a.data.order;
@@ -49,6 +52,15 @@ try{
  assert.deepEqual(Object.keys(JSON.parse(sent.body.chat_data)).sort(),['name','r','reference','status','v']);
  assert.ok(sent.body.reply_markup.inline_keyboard.some(row=>row.some(b=>b.web_app?.url.includes('?track='+encodeURIComponent(alice.id)))));
  assert.ok(sent.body.caption.includes(alice.serviceName));
+ assert.ok(ref.fallback_message_id>0);assert.equal(ref.widget_available,1);
+ const fallback=calls.find(c=>['sendRichMessage','sendMessage'].includes(c.method)&&JSON.stringify(c.body).includes(alice.id.slice(0,11).toUpperCase())&&c.body.chat_id==='90002');
+ assert.ok(fallback,'a readable ordinary message is required even when sendWidget succeeds');
+ assert.ok(fallback.body.reply_markup.inline_keyboard.some(row=>row.some(b=>b.callback_data==='w:order:'+alice.id)));
+ const readableStart=calls.length;
+ const readableRefresh=callback(90002,'w:order:'+alice.id,ref.fallback_message_id);await hook(readableRefresh);
+ assert.ok(calls.slice(readableStart).some(c=>c.method==='editMessageText'&&c.body.message_id===ref.fallback_message_id));
+ assert.equal(calls.slice(readableStart).some(c=>c.method==='sendWidget'||c.method==='sendRichMessage'||c.method==='sendMessage'),false,'Refresh edits the existing pair without new messages');
+ const readableCount=calls.length;await hook(readableRefresh);assert.equal(calls.length,readableCount,'replayed readable callbacks have no side effects');
  const queryStart=calls.length,begin=performance.now();let refresh=query(90002,ref.message_id);await hook(refresh);
  assert.equal(lastAnswer().ok,true);assert.ok(calls.findLast(c=>c.method==='answerWidgetQuery').at-begin<15000);
  const queryCalls=calls.slice(queryStart);
@@ -64,7 +76,7 @@ try{
  await hook(query(90003,ref.message_id));assert.equal(lastAnswer().ok,false);
  assert.equal((await request('/api/orders/'+alice.id,'GET',undefined,90003)).status,404);
  // Even a corrupt/forged message reference must recheck the authoritative order.
- await db.prepare(`INSERT INTO telegram_widget_messages SELECT '90003',999,user_id,kind,resource_id,locale,template_version,active,created_at,expires_at FROM telegram_widget_messages WHERE message_id=?`).bind(ref.message_id).run();
+ await db.prepare(`INSERT INTO telegram_widget_messages (chat_id,message_id,user_id,kind,resource_id,locale,template_version,active,created_at,expires_at) SELECT '90003',999,user_id,kind,resource_id,locale,template_version,active,created_at,expires_at FROM telegram_widget_messages WHERE message_id=?`).bind(ref.message_id).run();
  await db.prepare("UPDATE telegram_widget_messages SET user_id='90003' WHERE chat_id='90003'").run();
  await hook(query(90003,999));assert.equal(lastAnswer().ok,false);assert.equal(stateEdit(999),undefined);
  await hook(query(90002,99999));assert.equal(lastAnswer().ok,false);
@@ -96,6 +108,7 @@ try{
  failMethod='editMessageWidgetData';failureCode=500;
  const process=await request('/api/owner/orders','POST',{id:alice.id,version:alice.version,action:'process'},90001);
  assert.equal(process.status,200);assert.equal(process.data.order.status,'Processing','Widget failures cannot roll back a successful order transition');failMethod='';
+ assert.ok(calls.findLast(c=>c.method==='editMessageText'&&c.body.message_id===ref.fallback_message_id).body.rich_message.html.includes('Processing'),'readable status updates survive Widget API failures');
  await db.prepare('DELETE FROM telegram_widget_queries').run();
  await hook(query(90002,ref.message_id));assert.equal(JSON.parse(stateEdit(ref.message_id).body.chat_data).status,'Processing');
  const done=await request('/api/owner/orders','POST',{id:alice.id,version:process.data.order.version,action:'done'},90001);
@@ -109,7 +122,11 @@ try{
  await db.prepare('DELETE FROM telegram_widget_queries').run();
  await hook(query(90002,ref.message_id));assert.equal(lastAnswer().ok,true);
  missingMessage=ref.message_id;await hook(query(90002,ref.message_id));missingMessage=0;
- assert.equal((await db.prepare('SELECT active FROM telegram_widget_messages WHERE message_id=?').bind(ref.message_id).first()).active,0);
+ const lostWidget=await refFor('order',90002,alice.id);assert.equal(lostWidget.widget_available,0);assert.equal(lostWidget.active,1);
+ const lostStart=calls.length;await hook(callback(90002,'w:order:'+alice.id,lostWidget.fallback_message_id));
+ assert.equal(calls.slice(lostStart).some(c=>c.method==='editMessageWidgetData'||c.method==='sendWidget'),false);
+ assert.ok(calls.slice(lostStart).some(c=>c.method==='editMessageText'&&c.body.message_id===lostWidget.fallback_message_id));
+ await hook(query(90002,ref.message_id));assert.equal(lastAnswer().ok,false);
  await hook(callback(90002,'w:order:'+alice.id));ref=await refFor('order',90002,alice.id);assert.ok(ref);
  // A state that is already current may still need its fallback caption repaired.
  await db.prepare('DELETE FROM telegram_widget_queries').run();
@@ -117,10 +134,30 @@ try{
  const beforeUnchanged=calls.length;await hook(query(90002,ref.message_id));failMethod='';
  assert.ok(calls.slice(beforeUnchanged).some(c=>c.method==='editMessageCaption'&&c.body.message_id===ref.message_id));
  assert.ok(await refFor('order',90002,alice.id));
+ failMethod='editMessageText';failureCode=500;failureText='Temporary ordinary-message edit failure';
+ const transientStart=calls.length;await hook(callback(90002,'w:order:'+alice.id,ref.fallback_message_id));failMethod='';
+ assert.equal(calls.slice(transientStart).some(c=>['sendWidget','sendRichMessage','sendMessage'].includes(c.method)),false,'ambiguous companion edits never cause blind resends');
+ assert.equal((await refFor('order',90002,alice.id)).fallback_message_id,ref.fallback_message_id);
+ const oldFallback=ref.fallback_message_id;missingFallbackMessage=oldFallback;
+ await hook(callback(90002,'w:order:'+alice.id,oldFallback));missingFallbackMessage=0;
+ ref=await refFor('order',90002,alice.id);assert.notEqual(ref.fallback_message_id,oldFallback,'only a confirmed missing ordinary message is recreated');
  await hook(callback(90002,'pick:telegram-bot'));assert.ok(await refFor('service',90002,'telegram-bot'));
  failMethod='sendWidget';failureCode=400;failureText='Bad Request: Widget method not supported';
  const beforeFallback=calls.length;await hook(callback(90002,'w:order:'+alice.id));
  assert.ok(calls.slice(beforeFallback).some(c=>['sendRichMessage','sendMessage'].includes(c.method)&&JSON.stringify(c.body).includes(alice.id.slice(0,11).toUpperCase())));
+ let textOnly=await refFor('order',90002,alice.id);assert.equal(textOnly.widget_available,0);assert.equal(textOnly.message_id,textOnly.fallback_message_id);
+ const textStart=calls.length;await hook(callback(90002,'w:order:'+alice.id,textOnly.fallback_message_id));
+ assert.ok(calls.slice(textStart).some(c=>c.method==='editMessageText'&&c.body.message_id===textOnly.fallback_message_id));
+ assert.equal(calls.slice(textStart).some(c=>c.method==='sendWidget'),false);
+ failureCode=500;failureText='Ambiguous Widget delivery failure';
+ const ambiguousStart=calls.length;await hook(callback(90002,'w:order:'+alice.id));
+ textOnly=await refFor('order',90002,alice.id);assert.equal(textOnly.widget_available,0);assert.ok(textOnly.fallback_message_id);
+ assert.equal(calls.slice(ambiguousStart).filter(c=>c.method==='sendWidget').length,1,'ambiguous Widget sends are never retried');
+ failMethod='sendRichMessage';failureCode=500;failureText='Temporary fallback failure';
+ await hook(callback(90002,'w:order:'+alice.id));const repair=await refFor('order',90002,alice.id);
+ assert.equal(repair.widget_available,1);assert.equal(repair.fallback_message_id,null);
+ failMethod='';await db.prepare('DELETE FROM telegram_widget_queries').run();await hook(query(90002,repair.message_id));
+ assert.ok((await refFor('order',90002,alice.id)).fallback_message_id,'later refresh repairs a missing companion');
  failMethod='answerWidgetQuery';failureCode=500;failureText='Private upstream body must never be logged';
  await hook(query(90002,ref.message_id));failMethod='';
  const malformed={update_id:++updateId,widget_query:{...query(90002,ref.message_id).widget_query,data:'က'.repeat(30)}};

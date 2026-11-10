@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {randomBytes} from 'node:crypto';
-import {cloudflare,requireIsolatedDatabase} from './release-cloudflare.mjs';
+import {cloudflare,requireIsolatedDatabase,pendingWidgetFallbackStatements} from './release-cloudflare.mjs';
 import {inspectRelease} from './release-preflight.mjs';
 import {previewHandler} from './release-preview-worker.mjs';
 import {widgetTemplate,widgetCaption} from '../lib/telegram-widget-ui.ts';
@@ -31,6 +31,12 @@ try {
  for(const migration of migrated?[]:migrations) {
   const statements=(await fs.readFile(path.join('drizzle',migration),'utf8')).split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean);
   for(const sql of statements)await api(`d1/database/${stageId}/query`,{method:'POST',label:'staging schema migration',body:{sql}});
+ }
+ if(migrated){
+  const info=await api(`d1/database/${stageId}/query`,{method:'POST',label:'staging Widget fallback columns',body:{sql:'PRAGMA table_info(telegram_widget_messages)'}});
+  const columns=(info[0]?.results??[]).map(row=>row.name);
+  const sql=await fs.readFile('drizzle/0005_crazy_electro.sql','utf8');
+  for(const statement of pendingWidgetFallbackStatements(columns,sql))await api(`d1/database/${stageId}/query`,{method:'POST',label:'additive staging Widget fallback migration',body:{sql:statement}});
  }
  console.log('Applied all migrations to the isolated staging database; no customer rows copied.');
  const settings=await api('workers/scripts/k9-service/settings',{label:'existing Worker binding metadata'});

@@ -2,7 +2,7 @@ import { getDb } from '../db';
 import { orders, widgetMessages, widgetQueries, hostingHealth } from '../db/schema';
 import { and, eq, gt, or } from 'drizzle-orm';
 import { runtime, catalog, json } from './server';
-import { telegram, sendPresented } from './telegram';
+import { telegram, sendPresented, editPresented } from './telegram';
 import { normalizeStatus } from './catalog';
 import { widgetApi, widgetData } from './telegram-widget-api';
 import { widgetTemplate, widgetCaption, boundedText, type WidgetKind, type WidgetState } from './telegram-widget-ui';
@@ -64,22 +64,44 @@ function markup(ref: Reference) {
 async function retire(ref: Reference) {
  await getDb().update(widgetMessages).set({ active: 0 }).where(and(eq(widgetMessages.chatId, ref.chatId), eq(widgetMessages.messageId, ref.messageId)));
 }
+const unchanged = (error: unknown) => code(error) === 400 && /not modified/i.test(String((error as Error).message));
+const missing = (error: unknown) => [400,404].includes(code(error) ?? 0) && /not found|invalid.*message|message.*invalid|no widget|widget.*missing|can't be edited|cannot be edited/i.test(String((error as Error).message));
+async function updateReference(ref: Reference, patch: Partial<Pick<Reference,'fallbackMessageId'|'widgetAvailable'>>) {
+ await getDb().update(widgetMessages).set(patch).where(and(eq(widgetMessages.chatId,ref.chatId),eq(widgetMessages.messageId,ref.messageId)));
+ Object.assign(ref,patch);
+}
+async function readable(ref: Reference, state: WidgetState) {
+ const caption=widgetCaption(ref.kind as WidgetKind,state,ref.locale==='my'?'my':'en'),reply_markup=markup(ref);
+ if(ref.fallbackMessageId) {
+  try{await editPresented(ref.chatId,ref.fallbackMessageId,caption,reply_markup);return;}
+  catch(error){if(unchanged(error))return;if(!missing(error))throw error;}
+ }
+ // Unsupported Telegram clients may hide the entire Widget, including caption
+ // and buttons. A conventional message remains readable on those clients.
+ const sent=await sendPresented(ref.chatId,caption,reply_markup);
+ if(!Number.isSafeInteger(sent.message_id)||sent.message_id<1)throw new Error('Invalid Widget fallback response');
+ await updateReference(ref,{fallbackMessageId:sent.message_id});
+}
 async function edit(ref: Reference, state: WidgetState) {
+ // Keep the readable message current even if the Widget API is unavailable.
+ try{await readable(ref,state);}catch(error){log('fallback edit',error);}
+ if(!ref.widgetAvailable)return;
  try {
   await api.editMessageWidgetData({ chat_id: ref.chatId, message_id: ref.messageId, chat_data: widgetData(state) });
  } catch (error) {
-  if (!(code(error) === 400 && /not modified/i.test(String((error as Error).message)))) {
-   if ([400, 404].includes(code(error) ?? 0) && /not found|invalid.*message|message.*invalid|no widget|widget.*missing|can't be edited|cannot be edited/i.test(String((error as Error).message))) await retire(ref);
-   throw error;
+  if (!unchanged(error)) {
+   if(missing(error))await updateReference(ref,{widgetAvailable:0});
+   log('state edit',error);return;
   }
  }
- // The caption is the complete fallback on older clients; keep it current too.
+ // Captions remain useful on supported clients; the paired message is the
+ // compatibility path for clients that cannot display Widget messages at all.
  try { await telegram('editMessageCaption', { chat_id: ref.chatId, message_id: ref.messageId, caption: widgetCaption(ref.kind as WidgetKind, state, ref.locale === 'my' ? 'my' : 'en'), reply_markup: markup(ref) }, { timeoutMs: 2500 }); }
  catch (error) { if (!(code(error) === 400 && /not modified/i.test(String((error as Error).message)))) log('caption edit', error); }
 }
 export async function sendK9Widget(userId: string, kind: WidgetKind, resourceId = '', locale: WidgetLocale = 'en', replace = false) {
  if (!widgetsEnabled() || !/^[1-9]\d{0,15}$/.test(userId)) return;
- const now = Date.now(), ref: Reference = { chatId: userId, userId, messageId: 0, kind, resourceId, locale, templateVersion: 1, active: 1, createdAt: now, expiresAt: now + 90 * 86400000 };
+ const now = Date.now(), ref: Reference = { chatId: userId, userId, messageId: 0, kind, resourceId, locale, templateVersion: 1, fallbackMessageId:null, widgetAvailable:0, active: 1, createdAt: now, expiresAt: now + 90 * 86400000 };
  try {
   const existing = await getDb().select().from(widgetMessages).where(and(eq(widgetMessages.userId, userId), eq(widgetMessages.kind, kind), eq(widgetMessages.resourceId, resourceId), eq(widgetMessages.active, 1))).all();
   if (!replace && existing.some(r => r.expiresAt > now)) return;
@@ -87,13 +109,18 @@ export async function sendK9Widget(userId: string, kind: WidgetKind, resourceId 
   let sent;
   try { sent = await api.sendWidget({ chat_id: userId, html: widgetTemplate(kind, locale), caption, chat_data: widgetData(state), allow_queries: true, reply_markup }); }
   catch (error) {
-   // Permanent Widget rejection can fall back safely. A timeout/5xx may have
-   // delivered the message already; do not blindly resend on ambiguous errors.
-   if ([400, 404].includes(code(error) ?? 0)) { await sendPresented(userId, caption, reply_markup); return; }
-   throw error;
+   // Never retry an ambiguous Widget send. Its independent readable companion
+   // is sent once whether the Widget succeeded, failed or timed out.
+   log('widget send',error);
   }
-  if (!Number.isSafeInteger(sent.message_id) || sent.message_id < 1) throw new Error('Invalid Widget response');
-  ref.messageId = sent.message_id;
+  if(sent&&Number.isSafeInteger(sent.message_id)&&sent.message_id>0){ref.messageId=sent.message_id;ref.widgetAvailable=1;}
+  try{
+   const fallback=await sendPresented(userId,caption,reply_markup);
+   if(!Number.isSafeInteger(fallback.message_id)||fallback.message_id<1)throw new Error('Invalid Widget fallback response');
+   ref.fallbackMessageId=fallback.message_id;
+   if(!ref.widgetAvailable)ref.messageId=fallback.message_id;
+  }catch(error){log('fallback send',error);}
+  if(!ref.messageId)return;
   await getDb().insert(widgetMessages).values(ref);
   for (const old of existing) await retire(old);
  } catch (error) { log('send', error); }
@@ -114,7 +141,7 @@ type Prepared = { message: string; ok: boolean; ref?: Reference; state?: WidgetS
 async function prepareQuery(updateId: number, query: WidgetQuery, locale: WidgetLocale): Promise<Prepared> {
  const c = widgetCopy[locale], db = runtime().DB!;
  const ref = await getDb().select().from(widgetMessages).where(and(eq(widgetMessages.chatId, String(query.chat!.id)), eq(widgetMessages.messageId, query.message_id!))).get();
- if (!ref || !ref.active || ref.expiresAt <= Date.now() || ref.templateVersion !== 1) return { ok: false, message: c.unavailable };
+ if (!ref || !ref.active || !ref.widgetAvailable || ref.expiresAt <= Date.now() || ref.templateVersion !== 1) return { ok: false, message: c.unavailable };
  if (ref.userId !== String(query.from.id) || ref.chatId !== String(query.from.id) ||
      ['owner', 'hosting'].includes(ref.kind) && ref.userId !== runtime().OWNER_TELEGRAM_ID) return { ok: false, message: c.denied };
  const now = Date.now();
@@ -151,18 +178,25 @@ export async function handleWidgetQuery(updateId: number, query: WidgetQuery) {
  },c.unavailable,log);
  return json({ ok: true });
 }
-export async function widgetCommand(chat: string, isOwner: boolean, text: string, data: string, language?: string) {
+async function refreshCard(userId: string, kind: WidgetKind, resourceId: string, messageId?: number, locale: WidgetLocale='en') {
+ if(messageId){
+  const ref=await getDb().select().from(widgetMessages).where(and(eq(widgetMessages.chatId,userId),eq(widgetMessages.userId,userId),eq(widgetMessages.kind,kind),eq(widgetMessages.resourceId,resourceId),eq(widgetMessages.active,1),gt(widgetMessages.expiresAt,Date.now()),or(eq(widgetMessages.messageId,messageId),eq(widgetMessages.fallbackMessageId,messageId)))).get();
+  if(ref&&ref.templateVersion===1){await edit(ref,await snapshot(ref));return;}
+ }
+ await sendK9Widget(userId,kind,resourceId,locale,true);
+}
+export async function widgetCommand(chat: string, isOwner: boolean, text: string, data: string, language?: string, messageId?: number) {
  if (!widgetsEnabled()) return false;
  const locale = widgetLocale(language);
  if (data === 'w:owner' || text === '/widgets') {
-  if (isOwner) await sendK9Widget(chat, 'owner', '', locale, true);
+  if (isOwner){if(data==='w:owner')await refreshCard(chat,'owner','',messageId,locale);else await sendK9Widget(chat,'owner','',locale,true);}
   return true;
  }
  if (data === 'w:hosting' || text === '/hostingstatus') {
-  if (isOwner) await sendK9Widget(chat, 'hosting', '', locale, true);
+  if (isOwner){if(data==='w:hosting')await refreshCard(chat,'hosting','',messageId,locale);else await sendK9Widget(chat,'hosting','',locale,true);}
   return true;
  }
  const match = /^w:(order|service):([a-zA-Z0-9-]{1,45})$/.exec(data);
- if (match) { await sendK9Widget(chat, match[1] as WidgetKind, match[2], locale, true); return true; }
+ if (match) { await refreshCard(chat,match[1] as WidgetKind,match[2],messageId,locale); return true; }
  return false;
 }
