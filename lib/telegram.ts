@@ -4,9 +4,9 @@ import { orders } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import {loadEmoji} from './emoji-manager';
 import {presenter} from './telegram-presentation';
-export async function telegram(method:string,payload:unknown){
+export async function telegram(method:string,payload:unknown,options?:{timeoutMs:number}){
  const token=runtime().BOT_TOKEN;if(!token)throw new Error('Bot token is not configured');
- let res:Response;try{res=await fetch(`https://api.telegram.org/bot${token}/${method}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(12000)});}catch{throw new Error(`Telegram ${method} could not be reached.`);}
+ let res:Response;try{res=await fetch(`https://api.telegram.org/bot${token}/${method}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(options?.timeoutMs??12000)});}catch{throw new Error(`Telegram ${method} could not be reached.`);}
  let data:any;try{data=await res.json();}catch{const e=new Error(`Telegram ${method}: HTTP ${res.status}, expected JSON.`) as Error&{code?:number};e.code=res.status;throw e;}
  if(!res.ok||!data?.ok){const e=new Error(typeof data?.description==='string'?data.description.replaceAll(token,'[redacted]'):`Telegram ${method} failed.`) as Error&{code?:number};e.code=data?.error_code||res.status;throw e;}return data.result;
 }

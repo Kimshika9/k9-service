@@ -239,10 +239,12 @@ class LocalTests(unittest.TestCase):
         grandchild = int(child_file.read_text())
         parent.kill()
         parent.wait(timeout=3)
-        self.eventually(lambda: not proc(record['pid']) or proc(record['pid'])[2] == 0)
+        self.eventually(lambda: (observed := proc(record['pid'])) is None or observed[2] == 0)
         # Startup verifies the saved run marker before killing the surviving process group.
         self.runtime.check()
-        self.eventually(lambda: not proc(grandchild) or proc(grandchild)[2] == 0)
+        # The process may disappear between two /proc reads. Inspect one
+        # observation so successful cleanup cannot itself make the test fail.
+        self.eventually(lambda: (observed := proc(grandchild)) is None or observed[2] == 0)
 
 
 if __name__ == '__main__':

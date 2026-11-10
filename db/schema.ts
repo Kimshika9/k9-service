@@ -29,3 +29,18 @@ export const hostingJobs = sqliteTable('hosting_jobs', {
  leaseUntil: integer('lease_until').notNull().default(0),
  lease: text('lease'),
 });
+
+// Additive, optional Widget state. Existing orders/settings/sessions are untouched.
+export const widgetMessages = sqliteTable('telegram_widget_messages', {
+ chatId: text('chat_id').notNull(), messageId: integer('message_id').notNull(),
+ userId: text('user_id').notNull(), kind: text('kind').notNull(), resourceId: text('resource_id').notNull().default(''),
+ locale: text('locale').notNull().default('en'), templateVersion: integer('template_version').notNull().default(1),
+ active: integer('active').notNull().default(1), createdAt: integer('created_at').notNull(), expiresAt: integer('expires_at').notNull(),
+}, t => [primaryKey({columns:[t.chatId,t.messageId]}), index('widget_resource_idx').on(t.kind,t.resourceId,t.active)]);
+export const widgetQueries = sqliteTable('telegram_widget_queries', {
+ id: text('id').primaryKey(), updateId: integer('update_id').notNull(), userId: text('user_id').notNull(), createdAt: integer('created_at').notNull(),
+}, t => [uniqueIndex('widget_update_unique').on(t.updateId), index('widget_query_rate_idx').on(t.userId,t.createdAt)]);
+export const hostingHealth = sqliteTable('hosting_health', {
+ ownerId: text('owner_id').primaryKey(), runtime: text('runtime').notNull(), projects: integer('projects').notNull(),
+ running: integer('running').notNull(), unknown: integer('unknown').notNull(), receivedAt: integer('received_at').notNull(),
+});

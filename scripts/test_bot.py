@@ -46,11 +46,13 @@ class BotTests(unittest.TestCase):
   def telegram(c,method,payload=None,**_):
    calls.append((method,payload))
    if method=='getMe':return {'id':123456,'username':'k9_test_bot'}
-   if method=='getWebhookInfo':return {'url':'https://example.test/api/telegram/webhook'}
+   if method=='getWebhookInfo':return {'url':'https://example.test/api/telegram/webhook','allowed_updates':bot.ALLOWED_UPDATES}
    return True
   with patch.object(bot,'telegram',side_effect=telegram),patch.object(bot,'website_check',return_value={}),patch('builtins.print'):
    bot.connect(CONFIG)
   methods=[m for m,_ in calls];self.assertIn('setWebhook',methods);self.assertNotIn('deleteWebhook',methods);self.assertNotIn('getUpdates',methods)
+  self.assertEqual(next(p for m,p in calls if m=='setWebhook')['allowed_updates'],['message','callback_query','widget_query'])
+  self.assertFalse(next(p for m,p in calls if m=='setWebhook')['drop_pending_updates'])
   owner_menu=[p for m,p in calls if m=='setChatMenuButton' and p.get('chat_id')][0]
   self.assertEqual(owner_menu['menu_button']['web_app']['url'],'https://example.test/owner')
  def test_http_403_diagnostics(self):

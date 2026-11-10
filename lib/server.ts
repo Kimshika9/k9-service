@@ -7,7 +7,7 @@ import { settings, services } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { defaultServices, type Service } from './catalog';
 export class ApiError extends Error { constructor(public status:number,message:string){super(message);} }
-type RuntimeEnv=Cloudflare.Env & {BOT_TOKEN?:string;OWNER_TELEGRAM_ID?:string;TELEGRAM_WEBHOOK_SECRET?:string;BOT_USERNAME?:string;SITE_URL?:string;K9_PUBLIC_ORIGIN?:string;K9_OWNER_SETUP?:string;K9_HOSTING_SECRET?:string};
+type RuntimeEnv=Cloudflare.Env & {BOT_TOKEN?:string;OWNER_TELEGRAM_ID?:string;TELEGRAM_WEBHOOK_SECRET?:string;BOT_USERNAME?:string;SITE_URL?:string;K9_PUBLIC_ORIGIN?:string;K9_OWNER_SETUP?:string;K9_HOSTING_SECRET?:string;K9_WIDGETS_ENABLED?:string};
 export const runtime=()=>{
  const bindings=env as RuntimeEnv;
  const site=publicOrigin(bindings.SITE_URL)||publicOrigin(bindings.K9_PUBLIC_ORIGIN);

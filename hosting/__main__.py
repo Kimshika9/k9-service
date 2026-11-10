@@ -37,6 +37,8 @@ class HostingWorker:
         self.projects = Projects(root)
         self.managed = mode == "bot-hosting"
         self.local = mode == 'local'
+        self.mode = mode
+        self.health_after = 0.0
         self.runtime = (Local(self.projects, [config.get('BOT_TOKEN'), config.get('TELEGRAM_WEBHOOK_SECRET'), secret])
                         if self.local else BotHosting(self.projects) if self.managed else Docker(self.projects))
         self.history = sqlite3.connect(root / 'job-results.sqlite')
@@ -49,6 +51,28 @@ class HostingWorker:
     def send(self, text: str, rows: list | None = None, *, rich: bool = True) -> dict:
         roles = self.queue('emojis')['roles']
         return EmojiManager(roles).send(self.config, self.owner, text, rows=rows, rich=rich)
+
+    def publish_health(self) -> None:
+        """Opt-in observations; failures never interrupt existing hosting jobs."""
+        if os.getenv('K9_HOSTING_HEARTBEAT') != '1' or time.monotonic() < self.health_after:
+            return
+        self.health_after = time.monotonic() + 30
+        try:
+            projects = self.projects.list()
+            running, unknown = 0, max(0, len(projects) - 20)
+            for project in projects[:20]:
+                try:
+                    state = self.runtime.state(project)
+                    if re.match(r'^running(?:$|\s*·)', state, re.I):
+                        running += 1
+                    elif state.lower() not in {'stopped', 'exited', 'created', 'paused', 'restarting',
+                            'not started', 'ready to stage', 'prepare runtime first', 'waiting to restart', 'deployment missing'}:
+                        unknown += 1
+                except (ProjectError, OSError, ValueError, ConnectionError, KeyError, TypeError):
+                    unknown += 1
+            self.queue('heartbeat', runtime=self.mode, projects=len(projects), running=running, unknown=unknown)
+        except (ConnectionError, ProjectError, OSError, ValueError, KeyError, TypeError):
+            print('Hosting health observation unavailable; existing queue processing continues.', flush=True)
 
     def menu(self) -> dict:
         return {'text': 'Upload and manage your bot projects.', 'rich': True,
@@ -251,6 +275,7 @@ def main() -> int:
                 idle = 2
                 while True:
                     try:
+                        worker.publish_health()
                         pending = pending or worker.queue('claim')['job']
                         if pending:
                             worker.process(pending)

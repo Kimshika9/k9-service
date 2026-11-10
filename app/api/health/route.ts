@@ -26,6 +26,16 @@ export async function GET(){
    checks.hostingQueue=true;
   }catch{ /* Disabled until the hosting migration is available. */ }
  }
+ if(e.K9_WIDGETS_ENABLED==='1'){
+  checks.widgets=false;
+  if(e.DB)try{
+   await e.DB.batch([
+    e.DB.prepare('SELECT chat_id,message_id,user_id,kind,resource_id,locale,template_version,active,created_at,expires_at FROM telegram_widget_messages LIMIT 0'),
+    e.DB.prepare('SELECT id,update_id,user_id,created_at FROM telegram_widget_queries LIMIT 0'),
+    e.DB.prepare('SELECT owner_id,runtime,projects,running,unknown,received_at FROM hosting_health LIMIT 0'),
+   ]);checks.widgets=true;
+  }catch{ /* Widgets remain unready until the additive migration is applied. */ }
+ }
  const ready=Object.values(checks).every(Boolean);
  return json({service:'k9-service',ready,checks},ready?200:503);
 }

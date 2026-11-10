@@ -15,6 +15,30 @@ from hosting.projects import Docker, ProjectError, Projects
 
 
 class HostingTests(unittest.TestCase):
+    def test_health_observation_is_opt_in_coarse_and_failure_safe(self):
+        with tempfile.TemporaryDirectory() as folder:
+            worker = HostingWorker({'OWNER_TELEGRAM_ID': '90001', 'BOT_TOKEN': 'fake'}, 'secret', Path(folder))
+            self.addCleanup(worker.history.close)
+            projects = [{'id': str(i)} for i in range(3)]
+            with patch.dict('os.environ', {'K9_HOSTING_HEARTBEAT': '0'}), patch.object(worker, 'queue') as queue:
+                worker.publish_health()
+                queue.assert_not_called()
+            with patch.dict('os.environ', {'K9_HOSTING_HEARTBEAT': '1'}), \
+                 patch.object(worker.projects, 'list', return_value=projects), \
+                 patch.object(worker.runtime, 'state', side_effect=['running · 10 MB', 'stopped', KeyError('private-runtime-detail')]), \
+                 patch.object(worker, 'queue') as queue:
+                worker.publish_health()
+                worker.publish_health()
+                queue.assert_called_once_with('heartbeat', runtime='docker', projects=3, running=1, unknown=1)
+                self.assertNotIn('private-runtime-detail', str(queue.call_args))
+            worker.health_after = 0
+            with patch.dict('os.environ', {'K9_HOSTING_HEARTBEAT': '1'}), \
+                 patch.object(worker.projects, 'list', return_value=[]), \
+                 patch.object(worker, 'queue', side_effect=ConnectionError('private-connection-detail')), \
+                 patch('builtins.print') as output:
+                worker.publish_health()
+                self.assertNotIn('private-connection-detail', str(output.call_args))
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)

@@ -1,0 +1,137 @@
+import assert from 'node:assert/strict';
+import {createHmac} from 'node:crypto';
+import {createRequire} from 'node:module';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+const require=createRequire(import.meta.url);
+const {Miniflare}=require(require.resolve('miniflare',{paths:[path.dirname(require.resolve('wrangler/package.json'))]}));
+const root=path.resolve('dist/server'),temporary=await fs.mkdtemp(path.join(os.tmpdir(),'k9-widget-tests-'));
+const modulePaths=(await fs.readdir(root,{recursive:true})).filter(p=>/\.(m?js)$/.test(p)).sort((a,b)=>a==='index.js'?-1:b==='index.js'?1:a.localeCompare(b));
+const secret='local-widget-test-secret-not-for-production',token='12345:local-test-only-not-a-real-token';
+let messageId=1000,updateId=10000,failMethod='',failureCode=500,failureText='Private upstream failure',missingMessage=0;
+const calls=[];
+const options={modules:modulePaths.map(p=>({type:'ESModule',path:path.join(root,p)})),modulesRoot:root,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'widget-api-test'},d1Persist:path.join(temporary,'d1'),
+ bindings:{BOT_TOKEN:token,OWNER_TELEGRAM_ID:'90001',TELEGRAM_WEBHOOK_SECRET:secret,SITE_URL:'https://example.test',K9_WIDGETS_ENABLED:'1',K9_HOSTING_SECRET:'local-test-private-hosting-queue-secret'},
+ outboundService:async request=>{
+  const method=new URL(request.url).pathname.split('/').pop(),body=await request.json();calls.push({method,body,at:performance.now()});
+  if(method===failMethod)return Response.json({ok:false,error_code:failureCode,description:failureText},{status:failureCode});
+  if(method==='editMessageWidgetData'&&body.message_id===missingMessage)return Response.json({ok:false,error_code:400,description:'Bad Request: message to edit not found'},{status:400});
+  return Response.json({ok:true,result:method==='getMe'?{id:12345,username:'k9_test_bot'}:method==='sendWidget'?{message_id:++messageId,chat:{id:Number(body.chat_id),type:'private'},widget:{}}:method.startsWith('edit')||method==='answerWidgetQuery'?true:{message_id:++messageId}});
+ }};
+let mf=new Miniflare(options),db;
+const signed=id=>{const p=new URLSearchParams({auth_date:String(Math.floor(Date.now()/1000)),user:JSON.stringify({id,first_name:'Synthetic QA'})});const data=[...p].sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>`${k}=${v}`).join('\n');const key=createHmac('sha256','WebAppData').update(token).digest();p.set('hash',createHmac('sha256',key).update(data).digest('hex'));return p.toString();};
+async function request(url,method='GET',body,user){const r=await mf.dispatchFetch('https://localhost'+url,{method,headers:{'Content-Type':'application/json',...(user?{'x-telegram-init-data':signed(user)}:{})},body:body===undefined?undefined:JSON.stringify(body)});return {status:r.status,data:await r.json()};}
+async function hook(update,header=secret){const r=await mf.dispatchFetch('https://localhost/api/telegram/webhook',{method:'POST',headers:{'Content-Type':'application/json','x-telegram-bot-api-secret-token':header},body:JSON.stringify(update)});assert.equal(r.status,header===secret?200:401);return r;}
+const message=(user,text)=>({update_id:++updateId,message:{message_id:updateId,from:{id:user,is_bot:false,first_name:'Synthetic QA'},chat:{id:user,type:'private'},text}});
+const callback=(user,data)=>({update_id:++updateId,callback_query:{id:'cb'+updateId,from:{id:user,is_bot:false},message:{message_id:10,chat:{id:user,type:'private'}},data}});
+const query=(user,mid,extra={})=>({update_id:++updateId,widget_query:{id:'q'+updateId,from:{id:user,is_bot:false},chat:{id:user,type:'private'},message_id:mid,chat_instance:'synthetic-chat',type:{type:'data'},data:'refresh',...extra}});
+const lastAnswer=()=>JSON.parse(calls.findLast(c=>c.method==='answerWidgetQuery').body.data);
+const stateEdit=mid=>calls.findLast(c=>c.method==='editMessageWidgetData'&&c.body.message_id===mid);
+const refFor=async(kind,user,resource='')=>db.prepare('SELECT * FROM telegram_widget_messages WHERE kind=? AND user_id=? AND resource_id=? AND active=1').bind(kind,String(user),resource).first();
+const queue=async(body,key=options.bindings.K9_HOSTING_SECRET)=>{const r=await mf.dispatchFetch('https://localhost/api/hosting/queue',{method:'POST',headers:{'Content-Type':'application/json','x-k9-hosting-secret':key},body:JSON.stringify({ownerId:'90001',...body})});return {status:r.status,data:await r.json()};};
+try{
+ db=await mf.getD1Database('DB');
+ const migrations=(await fs.readdir('drizzle')).filter(f=>f.endsWith('.sql')).sort();
+ async function migrate(name){for(const sql of (await fs.readFile('drizzle/'+name,'utf8')).split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(sql).run();}
+ for(const name of migrations.slice(0,4))await migrate(name);
+ assert.equal((await request('/api/health')).status,503,'enabled Widgets require the new migration');
+ // Widget storage failures must not prevent an otherwise valid order save.
+ let order=await request('/api/orders','POST',{serviceId:'telegram-bot',requestId:crypto.randomUUID(),details:'Synthetic pre-migration order'},90002);
+ assert.equal(order.status,201);
+ await migrate(migrations[4]);
+ assert.equal((await request('/api/health')).data.checks.widgets,true);
+ const a=await request('/api/orders','POST',{serviceId:'telegram-bot',requestId:crypto.randomUUID(),details:'Synthetic customer order'},90002);
+ assert.equal(a.status,201);const alice=a.data.order;
+ let ref=await refFor('order',90002,alice.id);assert.ok(ref);
+ const sent=calls.find(c=>c.method==='sendWidget'&&JSON.parse(c.body.chat_data).reference===alice.id.slice(0,11).toUpperCase());
+ assert.equal(sent.body.public_data,undefined);assert.equal(sent.body.is_shared,undefined);assert.equal(sent.body.protect_content,true);
+ assert.deepEqual(Object.keys(JSON.parse(sent.body.chat_data)).sort(),['name','r','reference','status','v']);
+ assert.ok(sent.body.reply_markup.inline_keyboard.some(row=>row.some(b=>b.web_app?.url.includes('?track='+encodeURIComponent(alice.id)))));
+ assert.ok(sent.body.caption.includes(alice.serviceName));
+ const queryStart=calls.length,begin=performance.now();let refresh=query(90002,ref.message_id);await hook(refresh);
+ assert.equal(lastAnswer().ok,true);assert.ok(calls.findLast(c=>c.method==='answerWidgetQuery').at-begin<15000);
+ const queryCalls=calls.slice(queryStart);
+ assert.ok(queryCalls.findIndex(c=>c.method==='answerWidgetQuery'&&c.body.widget_query_id===refresh.widget_query.id)<queryCalls.findIndex(c=>c.method==='editMessageWidgetData'&&c.body.message_id===ref.message_id));
+ const editCount=calls.filter(c=>c.method==='editMessageWidgetData').length;
+ await hook(refresh);await hook({...refresh,update_id:++updateId});
+ assert.equal(calls.filter(c=>c.method==='editMessageWidgetData').length,editCount);
+ assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM telegram_widget_queries WHERE id=?').bind(refresh.widget_query.id).first()).n,1);
+ assert.ok(await db.prepare('SELECT id FROM webhook_updates WHERE id=?').bind(refresh.update_id).first());
+ for(const extra of [{data:'status:'+alice.id+':done'},{type:{type:'sign_data'}},{inline_message_id:'inline'},{widget_id:'shared'},{chat:{id:90003,type:'private'}},{chat:{id:-1,type:'group'}}]){
+  await hook(query(90002,ref.message_id,extra));assert.equal(lastAnswer().ok,false);
+ }
+ await hook(query(90003,ref.message_id));assert.equal(lastAnswer().ok,false);
+ assert.equal((await request('/api/orders/'+alice.id,'GET',undefined,90003)).status,404);
+ // Even a corrupt/forged message reference must recheck the authoritative order.
+ await db.prepare(`INSERT INTO telegram_widget_messages SELECT '90003',999,user_id,kind,resource_id,locale,template_version,active,created_at,expires_at FROM telegram_widget_messages WHERE message_id=?`).bind(ref.message_id).run();
+ await db.prepare("UPDATE telegram_widget_messages SET user_id='90003' WHERE chat_id='90003'").run();
+ await hook(query(90003,999));assert.equal(lastAnswer().ok,false);assert.equal(stateEdit(999),undefined);
+ await hook(query(90002,99999));assert.equal(lastAnswer().ok,false);
+ await db.prepare('UPDATE telegram_widget_messages SET template_version=2 WHERE message_id=?').bind(ref.message_id).run();
+ await hook(query(90002,ref.message_id));assert.equal(lastAnswer().ok,false);
+ await db.prepare('UPDATE telegram_widget_messages SET template_version=1,expires_at=0 WHERE message_id=?').bind(ref.message_id).run();
+ await hook(query(90002,ref.message_id));assert.equal(lastAnswer().ok,false);
+ await db.prepare('UPDATE telegram_widget_messages SET expires_at=? WHERE message_id=?').bind(Date.now()+86400000,ref.message_id).run();
+ await hook(message(90002,'/widgets'));assert.equal(await refFor('owner',90002),null);
+ await hook(message(90001,'/widgets'));const ownerRef=await refFor('owner',90001);assert.ok(ownerRef);
+ await hook(message(90001,'/hostingstatus'));const hostRef=await refFor('hosting',90001);assert.ok(hostRef);
+ const hostSend=calls.findLast(c=>c.method==='sendWidget');assert.match(JSON.parse(hostSend.body.chat_data).note,/No verified/);assert.equal(JSON.parse(hostSend.body.chat_data).running,undefined);
+ assert.equal((await queue({op:'heartbeat',runtime:'local',projects:1,running:1,unknown:0},'wrong')).status,401);
+ assert.equal((await queue({op:'heartbeat',ownerId:'90002',runtime:'local',projects:1,running:1,unknown:0})).status,409);
+ assert.equal((await queue({op:'heartbeat',runtime:'local',projects:1,running:2,unknown:0})).status,400);
+ assert.equal((await queue({op:'heartbeat',runtime:'local',projects:2,running:1,unknown:1})).status,200);
+ await hook(query(90001,hostRef.message_id));let state=JSON.parse(stateEdit(hostRef.message_id).body.chat_data);assert.equal(state.running,1);assert.equal(state.unknown,1);
+ await db.prepare('UPDATE hosting_health SET received_at=?').bind(Date.now()-180000).run();
+ await hook(query(90001,hostRef.message_id));state=JSON.parse(stateEdit(hostRef.message_id).body.chat_data);assert.equal(state.running,undefined);assert.match(state.note,/Stale/);
+ await db.prepare('DELETE FROM telegram_widget_queries').run();
+ const concurrent=Array.from({length:6},()=>query(90001,ownerRef.message_id));
+ const start=calls.length;await Promise.all(concurrent.map(q=>hook(q)));
+ const answers=calls.slice(start).filter(c=>c.method==='answerWidgetQuery').map(c=>JSON.parse(c.body.data));
+ assert.equal(answers.filter(a=>a.ok).length,5);assert.equal(answers.filter(a=>!a.ok).length,1);
+ assert.equal((await db.prepare("SELECT COUNT(*) AS n FROM telegram_widget_queries WHERE user_id='90001'").first()).n,5);
+ // Existing status policy still gates actions; Widgets never approve receipts.
+ assert.equal((await request('/api/owner/orders','POST',{id:alice.id,version:alice.version,action:'done'},90001)).status,400);
+ await db.prepare("UPDATE orders SET status='Approved',payment_status='Paid',amount=5000 WHERE id=?").bind(alice.id).run();
+ failMethod='editMessageWidgetData';failureCode=500;
+ const process=await request('/api/owner/orders','POST',{id:alice.id,version:alice.version,action:'process'},90001);
+ assert.equal(process.status,200);assert.equal(process.data.order.status,'Processing','Widget failures cannot roll back a successful order transition');failMethod='';
+ await db.prepare('DELETE FROM telegram_widget_queries').run();
+ await hook(query(90002,ref.message_id));assert.equal(JSON.parse(stateEdit(ref.message_id).body.chat_data).status,'Processing');
+ const done=await request('/api/owner/orders','POST',{id:alice.id,version:process.data.order.version,action:'done'},90001);
+ assert.equal(done.status,200);assert.equal(JSON.parse(stateEdit(ref.message_id).body.chat_data).status,'Done');
+ assert.ok(calls.findLast(c=>c.method==='editMessageCaption'&&c.body.message_id===ref.message_id).body.caption.includes('Done'));
+ // Observe an order reference surviving an actual Worker/Miniflare restart.
+ const replay=query(90002,ref.message_id);await hook(replay);
+ await mf.dispose();mf=new Miniflare(options);db=await mf.getD1Database('DB');
+ const restartEdits=calls.filter(c=>c.method==='editMessageWidgetData').length;await hook(replay);
+ assert.equal(calls.filter(c=>c.method==='editMessageWidgetData').length,restartEdits);
+ await db.prepare('DELETE FROM telegram_widget_queries').run();
+ await hook(query(90002,ref.message_id));assert.equal(lastAnswer().ok,true);
+ missingMessage=ref.message_id;await hook(query(90002,ref.message_id));missingMessage=0;
+ assert.equal((await db.prepare('SELECT active FROM telegram_widget_messages WHERE message_id=?').bind(ref.message_id).first()).active,0);
+ await hook(callback(90002,'w:order:'+alice.id));ref=await refFor('order',90002,alice.id);assert.ok(ref);
+ // A state that is already current may still need its fallback caption repaired.
+ await db.prepare('DELETE FROM telegram_widget_queries').run();
+ failMethod='editMessageWidgetData';failureCode=400;failureText='Bad Request: message is not modified';
+ const beforeUnchanged=calls.length;await hook(query(90002,ref.message_id));failMethod='';
+ assert.ok(calls.slice(beforeUnchanged).some(c=>c.method==='editMessageCaption'&&c.body.message_id===ref.message_id));
+ assert.ok(await refFor('order',90002,alice.id));
+ await hook(callback(90002,'pick:telegram-bot'));assert.ok(await refFor('service',90002,'telegram-bot'));
+ failMethod='sendWidget';failureCode=400;failureText='Bad Request: Widget method not supported';
+ const beforeFallback=calls.length;await hook(callback(90002,'w:order:'+alice.id));
+ assert.ok(calls.slice(beforeFallback).some(c=>['sendRichMessage','sendMessage'].includes(c.method)&&JSON.stringify(c.body).includes(alice.id.slice(0,11).toUpperCase())));
+ failMethod='answerWidgetQuery';failureCode=500;failureText='Private upstream body must never be logged';
+ await hook(query(90002,ref.message_id));failMethod='';
+ const malformed={update_id:++updateId,widget_query:{...query(90002,ref.message_id).widget_query,data:'က'.repeat(30)}};
+ const beforeInvalid=calls.length;await hook(malformed);assert.equal(calls.length,beforeInvalid);
+ await hook(message(90002,'/start'),'wrong');
+ // Existing queue claim/ack protocol continues to work after heartbeat records.
+ await hook(message(90001,'/hosting'));const job=(await queue({op:'claim'})).data.job;assert.equal(job.payload.action,'h:menu');
+ assert.equal((await queue({op:'ack',id:job.id,lease:job.lease})).status,200);
+ assert.equal((await queue({op:'claim'})).data.job,null);
+ await mf.dispose();mf=new Miniflare({...options,bindings:{...options.bindings,K9_WIDGETS_ENABLED:'0'}});
+ const disabledStart=calls.length;await hook(query(90002,ref.message_id));assert.equal(lastAnswer().ok,false);assert.match(lastAnswer().message,/disabled/);
+ assert.equal(calls.slice(disabledStart).some(c=>c.method==='editMessageWidgetData'),false);
+ console.log('Widget API integration passed: local D1 migration gating, real Worker routing, sender/role/order isolation, private state, captions/Mini App links, answer timing, concurrent rate limits, persistent replay/restart, missing/old messages, API failures, owner transitions, hosting heartbeat expiry and unchanged queue leases. Telegram is mocked; no live bot was contacted.');
+}finally{await mf.dispose();await fs.rm(temporary,{recursive:true,force:true});}

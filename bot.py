@@ -30,7 +30,8 @@ CONFIG_FILE = ROOT / '.k9-service-config.json'
 SECRETS_FILE = ROOT / 'CLOUDFLARE-SECRETS.txt'
 OFFSET_FILE = ROOT / '.k9-service-offset'
 FIELDS = ('BOT_TOKEN', 'BOT_USERNAME', 'OWNER_TELEGRAM_ID', 'TELEGRAM_WEBHOOK_SECRET', 'SITE_URL')
-VERSION = '1.2'
+VERSION = '1.3'
+ALLOWED_UPDATES = ['message', 'callback_query', 'widget_query']
 COMMANDS = [
     {'command': 'start', 'description': 'Open K9 Service'},
     {'command': 'services', 'description': 'Browse available services'},
@@ -249,10 +250,12 @@ def connect(c: dict):
     website_check(c, me)
     configure_menu(c)
     target = c['SITE_URL'] + '/api/telegram/webhook'
-    telegram(c, 'setWebhook', {'url': target, 'secret_token': c['TELEGRAM_WEBHOOK_SECRET'], 'allowed_updates': ['message', 'callback_query'], 'drop_pending_updates': False})
+    telegram(c, 'setWebhook', {'url': target, 'secret_token': c['TELEGRAM_WEBHOOK_SECRET'], 'allowed_updates': ALLOWED_UPDATES, 'drop_pending_updates': False})
     info = telegram(c, 'getWebhookInfo')
     if info.get('url') != target:
         raise ConnectionError('Telegram did not retain the expected webhook URL.')
+    if not set(ALLOWED_UPDATES).issubset(info.get('allowed_updates', [])):
+        raise ConnectionError('Telegram did not retain message, callback_query and widget_query subscriptions. Reconnect and check --status.')
     print(f"\nConnected @{me['username']} to K9 Service.")
     print('The bot runs through Cloudflare. You can close this Python process.')
     print('Open the bot → Start → Owner dashboard / Open K9 Service.')
@@ -274,7 +277,7 @@ def poll(c: dict):
         offset = 0
     while True:
         try:
-            updates = telegram(c, 'getUpdates', {'offset': offset, 'timeout': 25, 'allowed_updates': ['message', 'callback_query']}, timeout=35)
+            updates = telegram(c, 'getUpdates', {'offset': offset, 'timeout': 25, 'allowed_updates': ALLOWED_UPDATES}, timeout=35)
             for update in updates:
                 response = request_json(c['SITE_URL'] + '/api/telegram/webhook', update, {'x-telegram-bot-api-secret-token': c['TELEGRAM_WEBHOOK_SECRET']})
                 if not response.get('ok'):
@@ -314,6 +317,7 @@ def main(argv=None):
                 raise ConnectionError('Telegram points to a different webhook. Run --connect to restore this K9 Worker.')
             print(f"Bot: @{me['username']} | Website verified | Mode: {'webhook' if info.get('url') else 'polling/not connected'}")
             print('Pending updates:', info.get('pending_update_count', 0))
+            print('Required update subscriptions:', 'ready' if set(ALLOWED_UPDATES).issubset(info.get('allowed_updates', [])) else 'incomplete — run --connect')
             if info.get('last_error_message'):
                 print('Telegram recorded a delivery error. Check Cloudflare logs and send /start before checking again.')
         elif args.poll:

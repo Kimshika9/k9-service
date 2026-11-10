@@ -5,6 +5,7 @@ import {loadEmojiRoles} from '../../../../lib/emoji-manager';
 
 const leaseDuration = 10 * 60 * 1000;
 const maxJobAge = 15 * 60 * 1000;
+const isCount = (value:unknown):value is number => typeof value==='number'&&Number.isSafeInteger(value)&&value>=0&&value<=10000;
 
 export async function POST(request: Request) {
  const env = runtime();
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
 
  let body;
  try {
-  body = await request.json() as { op?: string; id?: number; lease?: string; ownerId?: string };
+  body = await request.json() as { op?: string; id?: number; lease?: string; ownerId?: string; runtime?: string; projects?: number; running?: number; unknown?: number };
  } catch {
   return json({ error: 'Invalid hosting request' }, 400);
  }
@@ -27,6 +28,19 @@ export async function POST(request: Request) {
  if (!env.OWNER_TELEGRAM_ID || body.ownerId !== env.OWNER_TELEGRAM_ID) return json({ error: 'Owner mismatch' }, 409);
 
  try {
+  if (body.op === 'heartbeat') {
+   const {projects,running,unknown}=body;
+   if (!['local','docker','bot-hosting'].includes(body.runtime??'') ||
+       !isCount(projects)||!isCount(running)||!isCount(unknown)||running+unknown>projects)
+    return json({error:'Invalid hosting observation'},400);
+   // Receipt time is assigned here. A runner never gets to backdate or extend
+   // its own health, and no project names/logs/tokens are accepted or returned.
+   await db.prepare(`INSERT INTO hosting_health(owner_id,runtime,projects,running,unknown,received_at)
+    VALUES(?,?,?,?,?,?) ON CONFLICT(owner_id) DO UPDATE SET runtime=excluded.runtime,projects=excluded.projects,
+    running=excluded.running,unknown=excluded.unknown,received_at=excluded.received_at`)
+    .bind(body.ownerId,body.runtime,projects,running,unknown,Date.now()).run();
+   return json({ok:true});
+  }
   if (body.op === 'emojis') return json({roles:await loadEmojiRoles()});
   if (body.op === 'check') {
    await db.prepare('SELECT id, payload, created_at, lease_until, lease FROM hosting_jobs LIMIT 0').run();
