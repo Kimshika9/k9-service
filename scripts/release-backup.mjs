@@ -8,7 +8,7 @@ import {inspectRelease} from './release-preflight.mjs';
 const execute=promisify(execFile);
 async function command(file,args,label) {
  try{return await execute(file,args,{maxBuffer:8*1024*1024,timeout:180000,env:{...process.env,WRANGLER_SEND_METRICS:'false'}});}
- catch{throw new Error(`${label} failed. Private command output was withheld.`);}
+ catch(error){const code=String(error.stderr??'').match(/\[(K9_BACKUP_[A-Z_]+|SQLITE_[A-Z_]+)\]/)?.[1];throw new Error(`${label} failed${code?' ['+code+']':''}. Private command output was withheld.`);}
 }
 async function download(url,filename) {
  let response;try{response=await fetch(url,{signal:AbortSignal.timeout(60000)});}catch{throw new Error('Private export download failed.');}

@@ -69,20 +69,27 @@ def literal(value):
 
 def split_insert(db, statement):
     # Native D1 exports use SQLite INSERT ... VALUES, never arbitrary scripts.
-    match = re.fullmatch(r'\s*INSERT INTO\s+(?:"((?:[^"]|"")+)"|`([^`]+)`|([A-Za-z_][A-Za-z0-9_]*))\s+VALUES\s*\((.*)\)\s*;\s*', statement, re.S | re.I)
+    statement = re.sub(r'\A(?:\s|--[^\n]*(?:\n|$)|/\*.*?\*/)*', '', statement, flags=re.S)
+    match = re.fullmatch(r'INSERT INTO\s+(?:"((?:[^"]|"")+)"|`([^`]+)`|\[([^\]]+)\]|([A-Za-z_][A-Za-z0-9_]*))(?:\s*\(([^)]+)\))?\s+VALUES\s*\((.*)\)\s*;\s*', statement, re.S | re.I)
     if not match:
-        raise ValueError("Unsupported oversized statement")
-    table = (match[1] or match[2] or match[3]).replace('""', '"')
+        raise ValueError("K9_BACKUP_INSERT_FORMAT")
+    table = (match[1] or match[2] or match[3] or match[4]).replace('""', '"')
     info = db.execute("PRAGMA table_info(" + identifier(table) + ")").fetchall()
-    row = db.execute("SELECT " + match[4]).fetchone()
+    row = db.execute("SELECT " + match[6]).fetchone()
+    if match[5]:
+        names = [part.strip().strip('"`[]') for part in match[5].split(',')]
+        values = dict(zip(names, row))
+        if set(values) != {col[1] for col in info}:
+            raise ValueError("K9_BACKUP_COLUMNS")
+        row = tuple(values[col[1]] for col in info)
     if not info or row is None or len(row) != len(info):
-        raise ValueError("Invalid exported row")
+        raise ValueError("K9_BACKUP_ROW")
     primary = [i for i, col in enumerate(info) if col[5]]
     if not primary:
-        raise ValueError("Oversized row has no primary key")
+        raise ValueError("K9_BACKUP_PRIMARY_KEY")
     large = [i for i, value in enumerate(row) if len(literal(value).encode()) > 12_000]
     if not large or any(i in primary for i in large):
-        raise ValueError("Oversized primary key or row structure")
+        raise ValueError("K9_BACKUP_LARGE_KEY")
     columns = [identifier(col[1]) for col in info]
     initial = [literal(b"" if isinstance(value, bytes) else "") if i in large else literal(value) for i, value in enumerate(row)]
     yield "INSERT INTO " + identifier(table) + " (" + ",".join(columns) + ") VALUES (" + ",".join(initial) + ");"
@@ -113,11 +120,11 @@ def chunk_export(source, destination):
                 for part in replacement:
                     length = len(part.encode())
                     if length > LIMIT:
-                        raise ValueError("Statement still exceeds safe limit")
+                        raise ValueError("K9_BACKUP_STATEMENT_LIMIT")
                     largest = max(largest, length)
                     output.write(part + "\n")
         if verify.snapshot(source) != verify.snapshot(destination):
-            raise ValueError("Transformed export changed data")
+            raise ValueError("K9_BACKUP_DATA_MISMATCH")
         return {"largeStatementsSplit": transformed, "maximumStatementBytes": largest, "dataPreserved": True}
     finally:
         db.close()
@@ -126,6 +133,7 @@ def chunk_export(source, destination):
 if __name__ == "__main__":
     try:
         print(json.dumps(chunk_export(*sys.argv[1:3])))
-    except Exception:
-        print("Private receipt export preparation failed; SQL and row values withheld.", file=sys.stderr)
+    except Exception as error:
+        code = str(error) if isinstance(error, ValueError) and re.fullmatch(r'K9_BACKUP_[A-Z_]+', str(error)) else getattr(error, 'sqlite_errorname', 'K9_BACKUP_UNKNOWN')
+        print("Private receipt export preparation failed [" + code + "]; SQL and row values withheld.", file=sys.stderr)
         sys.exit(1)

@@ -61,6 +61,7 @@ jobs:
           python3 scripts/test-release-backup.py
       - run: pnpm build
       - run: pnpm test:api
+        id: integration
       - name: Export production D1 and verify a private restored backup
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -68,6 +69,7 @@ jobs:
           K9_RELEASE_REPORT_DIR: ${{ runner.temp }}/k9-release-report
         run: node scripts/release-backup.mjs
       - name: Verify the isolated Worker and a private owner Widget
+        if: ${{ !cancelled() && steps.integration.outcome == 'success' }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

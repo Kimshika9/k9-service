@@ -48,6 +48,32 @@ export function previewHandler(app,widget) {
      await telegram('editMessageWidgetData',{chat_id:env.OWNER_TELEGRAM_ID,message_id:sent.message_id,chat_data:JSON.stringify({v:1,r:2,name:'K9 Service Center',description:'Staging send and edit verified. Visual client review pending.',price:'—'})});
      return Response.json({privateOwnerWidgetSent:true,widgetEditVerified:true,visualClientReview:'pending'});
     }
+    if(operation==='/connect') {
+     const before=await telegram('getWebhookInfo',{});
+     if(before.url!==site+'/api/telegram/webhook')throw new Error('Refusing to replace a different bot webhook.');
+     const allowed=[...new Set([...(before.allowed_updates??[]),'message','callback_query','widget_query'])];
+     await telegram('setWebhook',{url:before.url,secret_token:env.TELEGRAM_WEBHOOK_SECRET,allowed_updates:allowed,drop_pending_updates:false,...(before.max_connections?{max_connections:before.max_connections}:{})});
+     const after=await telegram('getWebhookInfo',{});
+     return Response.json({urlMatches:after.url===before.url,subscriptionsReady:['message','callback_query','widget_query'].every(t=>after.allowed_updates?.includes(t)),pendingUpdates:after.pending_update_count??0,hasDeliveryError:!!after.last_error_message});
+    }
+    if(operation==='/verify-live') {
+     async function live(route,options={}) {
+      const response=await fetch(site+route,{...options,signal:AbortSignal.timeout(15000)});
+      return response;
+     }
+     const health=await live('/api/health'),root=await live('/');
+     const page=await root.text();
+     const asset=page.match(/(?:src|href)="(\/_next\/static\/[^"?#]+\.js)(?:[?#][^"]*)?"/);
+     const assetStatus=asset?(await live(asset[1])).status:null;
+     const unauthorized=await live('/api/owner/orders');
+     const owner=await live('/api/owner/orders',{headers:{'x-telegram-init-data':await signed(env.OWNER_TELEGRAM_ID)}});
+     const wrong=await live('/api/telegram/webhook',{method:'POST',headers:{'Content-Type':'application/json','x-telegram-bot-api-secret-token':'invalid-release-check'},body:'{"update_id":1}'});
+     const authenticatedMalformed=await live('/api/telegram/webhook',{method:'POST',headers:{'Content-Type':'application/json','x-telegram-bot-api-secret-token':env.TELEGRAM_WEBHOOK_SECRET},body:'{"update_id":1}'});
+     const hosting=await live('/api/hosting/queue',{method:'POST',headers:{'Content-Type':'application/json','x-k9-hosting-secret':env.K9_HOSTING_SECRET??''},body:JSON.stringify({op:'check',ownerId:env.OWNER_TELEGRAM_ID})});
+     const info=await telegram('getWebhookInfo',{});
+     return Response.json({rootStatus:root.status,assetStatus,healthStatus:health.status,health:await health.json(),ownerStatus:owner.status,unauthorizedStatus:unauthorized.status,wrongSecretStatus:wrong.status,authenticatedMalformedStatus:authenticatedMalformed.status,hostingStatus:hosting.status,
+      webhookUrlMatches:info.url===site+'/api/telegram/webhook',subscriptionsReady:['message','callback_query','widget_query'].every(t=>info.allowed_updates?.includes(t)),pendingUpdates:info.pending_update_count??0,hasDeliveryError:!!info.last_error_message});
+    }
     return new Response(null,{status:404});
    }catch(error){return Response.json({error:error instanceof Error?error.message:'Release preview failed.'},{status:502});}
   }

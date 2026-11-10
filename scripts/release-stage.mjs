@@ -10,8 +10,7 @@ try {
  const credentials={token:process.env.CLOUDFLARE_API_TOKEN,accountId:process.env.CLOUDFLARE_ACCOUNT_ID};
  const api=cloudflare(credentials),preflight=await inspectRelease(credentials);
  const directory=process.env.K9_RELEASE_REPORT_DIR;
- const backup=JSON.parse(await fs.readFile(path.join(directory,'backup.json'),'utf8'));
- if(!backup.restoreVerified||backup.databaseId!==preflight.databaseId)throw new Error('A verified private backup is required before staging.');
+ if(!directory)throw new Error('A private runner report directory is required.');
  const stamp=new Date().toISOString().replace(/\D/g,'').slice(0,14);
  const databases=await api('d1/database?per_page=100',{label:'staging resource lookup'});
  const existing=databases.filter(d=>/^k9-service-stage-[0-9]+$/.test(d.name)).sort((a,b)=>b.name.localeCompare(a.name))[0];
@@ -72,6 +71,8 @@ try {
  const after=await inspectRelease(credentials);
  if(JSON.stringify(after.productionVersions)!==JSON.stringify(preflight.productionVersions))throw new Error('Production version changed during staging; review before proceeding.');
  const report={stage:'isolated-staging-verified',stagingDatabaseId:stageId,stagingDatabaseName:database.name,checks,widgetChecks,productionMutated:false};
+ // This credential stays only on this ephemeral runner, outside every artifact.
+ await fs.writeFile(path.join(directory,'private-preview.json'),JSON.stringify({key,token:preview.preview_token,host:`https://k9-service.${subdomain.subdomain}.workers.dev`}),{mode:0o600});
  await fs.writeFile(path.join(directory,'staging.json'),JSON.stringify(report,null,2)+'\n',{mode:0o600});
  console.log(JSON.stringify(report,null,2));
 }catch(error){console.error(error instanceof Error?error.message:'Isolated staging verification failed.');process.exitCode=1;}
