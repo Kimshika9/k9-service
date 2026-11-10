@@ -3,8 +3,7 @@ import { verifyTelegramInitData } from './telegram-auth';
 import { publicOrigin } from './readiness';
 import { telegramCookie } from './telegram-session';
 import { getDb } from '../db';
-import { settings, services } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { services } from '../db/schema';
 import { defaultServices, type Service } from './catalog';
 export class ApiError extends Error { constructor(public status:number,message:string){super(message);} }
 type RuntimeEnv=Cloudflare.Env & {BOT_TOKEN?:string;OWNER_TELEGRAM_ID?:string;TELEGRAM_WEBHOOK_SECRET?:string;BOT_USERNAME?:string;SITE_URL?:string;K9_PUBLIC_ORIGIN?:string;K9_OWNER_SETUP?:string;K9_HOSTING_SECRET?:string;K9_WIDGETS_ENABLED?:string};
@@ -27,7 +26,7 @@ export type Actor=NonNullable<Awaited<ReturnType<typeof actor>>>;
 export async function customer(request:Request){const a=await actor(request);if(!a)throw new ApiError(401,'Sign in to manage your orders.');if(a.isOwner)throw new ApiError(403,'Owner accounts manage customer orders from /owner and cannot place customer orders.');return a;}
 export async function owner(request:Request){const a=await actor(request);if(!a)throw new ApiError(401,'Sign in to open Owner Control.');if(!a.isOwner)throw new ApiError(403,'Owner access is required.');return a;}
 export function sameOrigin(request:Request){const origin=request.headers.get('origin');if(origin&&origin!==new URL(request.url).origin)throw new ApiError(403,'Invalid request origin.');}
-export async function readBody(request:Request):Promise<Record<string,any>>{sameOrigin(request);const raw=await request.text();if(raw.length>30000)throw new ApiError(413,'This request is too large.');try{const data=JSON.parse(raw);if(!data||typeof data!=='object'||Array.isArray(data))throw new Error();return data;}catch{throw new ApiError(400,'Invalid request.');}}
+export async function readBody(request:Request):Promise<Record<string,unknown>>{sameOrigin(request);const raw=await request.text();if(raw.length>30000)throw new ApiError(413,'This request is too large.');try{const data:unknown=JSON.parse(raw);if(!data||typeof data!=='object'||Array.isArray(data))throw new Error();return data as Record<string,unknown>;}catch{throw new ApiError(400,'Invalid request.');}}
 export function textField(v:unknown,max:number,required=false){if(typeof v!=='string')v='';const out=(v as string).trim();if((required&&!out)||out.length>max)throw new ApiError(400,`Please check the required fields (maximum ${max} characters).`);return out;}
 export const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store'}});
 export function error(e:unknown){if(e instanceof ApiError)return json({error:e.message},e.status);console.error(e instanceof Error?e.message:'Request failed');return json({error:'Something went wrong. Please try again.'},500);}

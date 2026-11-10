@@ -1,6 +1,8 @@
 // Client launch data is only a transport hint. The server always verifies its HMAC.
 const storageKey='k9-telegram-launch';
-type LaunchWindow={Telegram?:{WebApp?:{initData?:string}};location:{hash:string};sessionStorage:{getItem:(k:string)=>string|null;setItem:(k:string,v:string)=>void;removeItem:(k:string)=>void}};
+type LaunchHost={initData?:string;ready?:()=>void;expand?:()=>void;setHeaderColor?:(color:string)=>void;setBackgroundColor?:(color:string)=>void};
+type LaunchWindow={Telegram?:{WebApp?:LaunchHost};location:{hash:string};sessionStorage:{getItem:(k:string)=>string|null;setItem:(k:string,v:string)=>void;removeItem:(k:string)=>void}};
+export function getTelegramWebApp(w:LaunchWindow|undefined=typeof window==='undefined'?undefined:window as unknown as LaunchWindow){return w?.Telegram?.WebApp;}
 export function getLaunchData(w:LaunchWindow|undefined=typeof window==='undefined'?undefined:window as unknown as LaunchWindow,now=Date.now()/1000):string{
  if(!w)return '';
  const valid=(raw:string)=>{const t=Number(new URLSearchParams(raw).get('auth_date'));return raw.length<=16384&&t>0&&now-t<=3600&&t-now<=30;};
@@ -14,7 +16,7 @@ let sdk:Promise<void>|undefined;
 export function loadTelegramSDK(){
  if(sdk)return sdk;
  sdk=new Promise<void>(resolve=>{
-  if((window as any).Telegram?.WebApp){resolve();return;}
+  if(getTelegramWebApp()){resolve();return;}
   const installed=document.getElementById('telegram-web-app');
   const script=installed||document.createElement('script');
   const finish=()=>{clearTimeout(timer);script.removeEventListener('load',finish);script.removeEventListener('error',finish);resolve();};

@@ -9,6 +9,7 @@ assert.deepEqual(await readApiResponse(Response.json({ok:true})),{ok:true});
 await assert.rejects(()=>readApiResponse(Response.json({error:'Order changed.'},{status:409})),/Order changed/);
 await assert.rejects(()=>readApiResponse(new Response('<html>secret upstream body</html>',{status:403,headers:{'cf-ray':'abc-XYZ'}})),e=>e.message.includes('HTTP 403')&&e.message.includes('Ray ID: abc-XYZ')&&!e.message.includes('secret upstream body'));
 await assert.rejects(()=>readApiResponse(new Response('login page',{status:200})),/expected K9 API response/);
+for(const value of [[],true,42,'private upstream payload'])await assert.rejects(()=>readApiResponse(Response.json(value)),/expected K9 API response/);
 await assert.rejects(()=>readApiResponse(Response.json(null,{status:503})),/HTTP 503/);
 let mutated=false;
 for(const scenario of ['missing','invalid','no-main'])assert.throws(()=>deployCloudflare({exists:()=>scenario!=='missing',read:()=>scenario==='invalid'?'bad JSON':'{}',prepare:()=>{mutated=true;},run:()=>{mutated=true;}}));

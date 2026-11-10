@@ -51,6 +51,9 @@ assert.equal(validUpdate({update_id:-1,widget_query:q}),false);
 assert.equal(validUpdate({update_id:1,message:{message_id:1,from:{id:1},chat:{id:2,type:'private'}}}),false);
 assert.equal(validUpdate({update_id:1,message:{message_id:1,from:{id:1},chat:{id:1,type:'private'},text:42}}),false);
 assert.equal(validUpdate({update_id:1,callback_query:{id:'',from:{id:1}}}),false);
+const validMessage={message_id:1,from:{id:1,first_name:'Synthetic'},chat:{id:1,type:'private'},text:'❤️',entities:[{type:'custom_emoji',offset:0,length:2,custom_emoji_id:'123'}]};
+assert.equal(validUpdate({update_id:1,message:validMessage}),true);
+for(const patch of [{from:{id:1,language_code:{invalid:true}}},{entities:{}},{entities:[null]},{entities:[{type:'custom_emoji',offset:'0',length:2}]}])assert.equal(validUpdate({update_id:1,message:{...validMessage,...patch}}),false,'malformed sender/entity fields cannot reach message handlers');
 await assert.rejects(()=>webhookBody(new Request('https://localhost',{method:'POST',body:'a'.repeat(100)}),50));
 assert.deepEqual(await webhookBody(new Request('https://localhost',{method:'POST',body:'{"update_id":1}'})),{update_id:1});
 

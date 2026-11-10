@@ -1,9 +1,9 @@
 // Never display an upstream HTML error page (or a token-bearing URL) in the UI.
-export async function readApiResponse(response:Response):Promise<Record<string,any>> {
+export async function readApiResponse<T extends object=Record<string,unknown>>(response:Response):Promise<T> {
  let data:unknown;
  try { data=await response.json(); } catch { /* Cloudflare/Access errors can be HTML. */ }
- const object=data&&typeof data==='object'&&!Array.isArray(data)?data as Record<string,any>:null;
- if(response.ok&&object)return object;
+ const object=data&&typeof data==='object'&&!Array.isArray(data)?data as Record<string,unknown>:null;
+ if(response.ok&&object)return object as T;
  if(!response.ok&&typeof object?.error==='string')throw new Error(object.error);
  const ray=response.headers.get('cf-ray')||'';
  const trace=/^[a-zA-Z0-9-]{1,100}$/.test(ray)?` Ray ID: ${ray}.`:'';

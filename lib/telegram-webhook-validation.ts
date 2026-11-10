@@ -1,7 +1,12 @@
 import { utf8Bytes } from './telegram-widget-api.ts';
 export const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const userId = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) > 0;
-const sender = (value: unknown) => record(value) && userId(value.id) && value.is_bot !== true;
+export type TelegramSender={id:number;is_bot?:boolean;first_name?:string;last_name?:string;username?:string;language_code?:string};
+export type TelegramIncoming={message_id:number;from?:TelegramSender;chat:{id:number;type:string};text?:string;reply_markup?:unknown;document?:unknown;reply_to_message?:unknown;entities?:{type:string;offset:number;length:number;custom_emoji_id?:string}[]};
+export type TelegramCallback={id:string;from:TelegramSender;message?:TelegramIncoming;data?:string};
+export type TelegramUpdate={update_id:number;message?:TelegramIncoming;callback_query?:TelegramCallback;widget_query?:WidgetQuery};
+const sender = (value: unknown):value is TelegramSender => record(value) && userId(value.id) && value.is_bot !== true &&
+ ['first_name','last_name','username','language_code'].every(key=>value[key]===undefined||typeof value[key]==='string');
 export type WidgetQuery = {
  id: string; from: { id: number; language_code?: string }; chat?: { id: number; type: string };
  message_id?: number; chat_instance: string; type: { type: string }; data: string;
@@ -14,7 +19,7 @@ export function isWidgetQuery(value: unknown): value is WidgetQuery {
   typeof value.type.type === 'string' && typeof value.data === 'string' && utf8Bytes(value.data) >= 1 && utf8Bytes(value.data) <= 64 &&
   value.data.isWellFormed() && !value.data.includes('\0');
 }
-export function validUpdate(value: unknown) {
+export function validUpdate(value: unknown):value is TelegramUpdate {
  if (!record(value) || !Number.isSafeInteger(value.update_id) || Number(value.update_id) < 0) return false;
  // Telegram defines exactly one update payload. Reject ambiguous mixed payloads.
  if (Object.keys(value).filter(k => k !== 'update_id').length !== 1) return false;
@@ -26,6 +31,7 @@ export function validUpdate(value: unknown) {
  if (!message) return true; // Unsupported updates, including inaccessible inline callbacks, are ignored.
  if (!record(message) || !record(message.chat) || !userId(message.message_id) || typeof message.chat.type !== 'string' ||
      message.text !== undefined && typeof message.text !== 'string') return false;
+ if(message.entities!==undefined&&(!Array.isArray(message.entities)||!message.entities.every(entity=>record(entity)&&typeof entity.type==='string'&&Number.isInteger(entity.offset)&&Number.isInteger(entity.length)&&(entity.custom_emoji_id===undefined||typeof entity.custom_emoji_id==='string'))))return false;
  const from = value.message ? message.from : record(callback) ? callback.from : undefined;
  if (!sender(from)) return false;
  if (message.chat.type === 'private' && (!userId(message.chat.id) || message.chat.id !== (from as Record<string, unknown>).id)) return false;

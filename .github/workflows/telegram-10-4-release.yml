@@ -53,6 +53,7 @@ jobs:
       - run: node scripts/test-release-public.mjs
       - name: Lint release scripts
         run: pnpm exec eslint scripts/release-*.mjs scripts/test-release-*.mjs
+      - run: pnpm lint
       - run: pnpm test
       - run: pnpm typecheck
       - name: Python regression tests

@@ -55,7 +55,7 @@ export async function emojiCommands(chat:string,isOwner:boolean,message:Incoming
  const entity=customEmojiEntity(message);
  if(!entity){await sendPresented(chat,'Send a Premium emoji as a text message. A sticker, image or normal emoji has no custom emoji entity.');return true;}
  let stickers:{set_name?:string;custom_emoji_id?:string;emoji?:string}[];
- try{stickers=await telegram('getCustomEmojiStickers',{custom_emoji_ids:[entity.id]});}
+ try{stickers=await telegram<typeof stickers>('getCustomEmojiStickers',{custom_emoji_ids:[entity.id]});}
  catch(err){if((err as {code?:number}).code!==400)throw err;console.warn('K9 emoji: Telegram rejected the supplied emoji entity');await sendPresented(chat,'Telegram could not read that custom emoji. Please send one from the configured pack again.');return true;}
  const sticker=stickers.find(s=>s.custom_emoji_id===entity.id);
  const pack=packs.find(p=>p.name===sticker?.set_name);

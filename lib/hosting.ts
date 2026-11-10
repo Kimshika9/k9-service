@@ -1,6 +1,7 @@
 import { hostingJobs } from '../db/schema';
 import { getDb } from '../db';
 import { lt } from 'drizzle-orm';
+import {record} from './telegram-webhook-validation';
 
 export const uploadPrompt = 'K9 Hosting · Reply here with a .py, .js or .zip document (up to 20 MB).';
 const day = 24 * 60 * 60 * 1000;
@@ -13,15 +14,18 @@ export type HostingJob = { action: string } | {
  file: { id: string; name: string; size: number };
 };
 
-export function hostingJob(message: any, callback: any): HostingJob | undefined {
- if (/^\/hosting(?:@\w+)?(?:\s|$)/i.test(message?.text ?? '')) return { action: 'h:menu' };
- if (typeof callback?.data === 'string' && /^h:[a-z0-9:-]{1,60}$/.test(callback.data)) {
+export function hostingJob(message: unknown, callback: unknown): HostingJob | undefined {
+ if (record(message)&&typeof message.text==='string'&&/^\/hosting(?:@\w+)?(?:\s|$)/i.test(message.text)) return { action: 'h:menu' };
+ if (record(callback)&&typeof callback.data === 'string' && /^h:[a-z0-9:-]{1,60}$/.test(callback.data)) {
   return { action: callback.data };
  }
- const file = message?.document;
- const reply = message?.reply_to_message;
- if (file && reply?.from?.is_bot === true && reply.text === uploadPrompt) {
-  return { file: { id: file.file_id, name: file.file_name, size: file.file_size } };
+ const file = record(message)?message.document:undefined;
+ const reply = record(message)?message.reply_to_message:undefined;
+ // Telegram may omit file_size. The hosting downloader still enforces its
+ // byte limit; zero here means the size has not been supplied by Telegram.
+ const size=record(file)&&file.file_size===undefined?0:record(file)?file.file_size:undefined;
+ if (record(file)&&record(reply)&&record(reply.from)&&reply.from.is_bot === true && reply.text === uploadPrompt&&typeof file.file_id==='string'&&typeof file.file_name==='string'&&typeof size==='number'&&Number.isSafeInteger(size)&&size>=0) {
+  return { file: { id: file.file_id, name: file.file_name, size } };
  }
 }
 

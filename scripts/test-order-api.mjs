@@ -108,11 +108,19 @@ try{
  assert.equal((await queue('claim')).data.job,null,'unprompted upload and replay cannot create jobs');
  const reply=structuredClone(upload);reply.update_id=984;
  reply.message.reply_to_message={from:{is_bot:true},text:'K9 Hosting · Reply here with a .py, .js or .zip document (up to 20 MB).'};
+ for(const [index,file] of [null,{file_id:'test-file',file_name:42,file_size:120},{file_id:'test-file',file_name:'nested.zip',file_size:-1}].entries()){
+  const malformed=structuredClone(reply);malformed.update_id=1700+index;malformed.message.document=file;
+  await hook(malformed);assert.equal((await queue('claim')).data.job,null,'malformed upload metadata cannot enqueue a hosting job');
+ }
  await hook(reply);
  const uploadJob=(await queue('claim')).data.job;
  assert.deepEqual(uploadJob.payload,{file:{id:'test-file',name:'nested.zip',size:120}});
  await queue('ack',{id:uploadJob.id,lease:uploadJob.lease});
  assert.equal((await queue('claim')).data.job,null);
+ const unknownSize=structuredClone(reply);unknownSize.update_id=1703;delete unknownSize.message.document.file_size;
+ await hook(unknownSize);const unknownSizeJob=(await queue('claim')).data.job;
+ assert.deepEqual(unknownSizeJob.payload,{file:{id:'test-file',name:'nested.zip',size:0}},'optional Telegram file_size does not break a valid owner upload');
+ await queue('ack',{id:unknownSizeJob.id,lease:unknownSizeJob.lease});
  // Emoji tools are owner-only and persistent across independent webhook requests.
  const emojiRows=(await queue('emojis')).data.roles;
  assert.equal(typeof emojiRows.welcome.id,'string');
