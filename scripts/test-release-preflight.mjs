@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {inspectRelease} from './release-preflight.mjs';
+const credentials={token:'synthetic-private-token-never-print',accountId:'1'.repeat(32)};
+const id='00000000-0000-4000-8000-000000000001';
+const settings={bindings:[{name:'DB',type:'d1',id},{name:'BOT_TOKEN',type:'secret_text'},{name:'OWNER_TELEGRAM_ID',type:'plain_text',text:'private-owner-id'},{name:'TELEGRAM_WEBHOOK_SECRET',type:'secret_text'}]};
+const requests=[];
+const request=async(url,options)=>{requests.push({url,options});return Response.json({success:true,result:url.endsWith('/settings')?settings:url.endsWith('/deployments')?{deployments:[{id:'deployment',created_on:'2026-11-09',versions:[{version_id:'version',percentage:100}]}]}:{name:'k9-service-db',version:'production',file_size:123}});};
+const result=await inspectRelease({...credentials,request});
+assert.equal(result.productionMutated,false);assert.equal(result.databaseId,id);
+assert.ok(requests.every(r=>r.options.method==='GET'));
+assert.ok(requests.every(r=>new URL(r.url).origin==='https://api.cloudflare.com'));
+assert.doesNotMatch(JSON.stringify(result),/synthetic-private-token|private-owner-id/);
+await assert.rejects(()=>inspectRelease({accountId:credentials.accountId}),/Missing repository secret/);
+await assert.rejects(()=>inspectRelease({...credentials,accountId:'wrong'}),/account ID/);
+await assert.rejects(()=>inspectRelease({...credentials,request:async()=>Response.json({success:false,errors:[{code:10000,message:'private-token '+credentials.token}]},{status:403})}),error=>error.message.includes('HTTP 403')&&!error.message.includes(credentials.token));
+await assert.rejects(()=>inspectRelease({...credentials,request:async()=>Response.json({success:true,result:{bindings:[]}})}),/DB binding/);
+await assert.rejects(()=>inspectRelease({...credentials,request:async(url,options)=>url.endsWith('/database/'+id)?Response.json({success:true,result:{name:'other-project'}}):request(url,options)}),/expected k9-service-db/);
+console.log('Release preflight: GET-only access, existing binding/rollback validation, wrong account/DB rejection, missing secrets and error/owner/token redaction passed.');
