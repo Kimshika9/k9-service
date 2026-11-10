@@ -13,10 +13,23 @@ try {
  const backup=JSON.parse(await fs.readFile(path.join(directory,'backup.json'),'utf8'));
  if(!backup.restoreVerified||backup.databaseId!==preflight.databaseId)throw new Error('A verified private backup is required before staging.');
  const stamp=new Date().toISOString().replace(/\D/g,'').slice(0,14);
- const database=await api('d1/database',{method:'POST',label:'isolated staging database creation',body:{name:`k9-service-stage-${stamp}`}});
+ const databases=await api('d1/database?per_page=100',{label:'staging resource lookup'});
+ const existing=databases.filter(d=>/^k9-service-stage-[0-9]+$/.test(d.name)).sort((a,b)=>b.name.localeCompare(a.name))[0];
+ let database,migrated=false;
+ if(existing) {
+  requireIsolatedDatabase(preflight.databaseId,existing);
+  const tables=await api(`d1/database/${existing.uuid}/query`,{method:'POST',label:'staging schema inspection',body:{sql:"SELECT name FROM sqlite_master WHERE type='table'"}});
+  const names=new Set(tables[0]?.results?.map(r=>r.name));
+  if(['orders','payments','hosting_jobs','telegram_widget_messages','telegram_widget_queries','hosting_health'].every(n=>names.has(n))) {
+   const rows=await api(`d1/database/${existing.uuid}/query`,{method:'POST',label:'staging isolation check',body:{sql:'SELECT COUNT(*) AS n FROM orders'}});
+   if(rows[0]?.results?.[0]?.n!==0)throw new Error('The existing staging database contains orders; refusing to reuse it automatically.');
+   database=existing;migrated=true;
+  }
+ }
+ database??=await api('d1/database',{method:'POST',label:'isolated staging database creation',body:{name:`k9-service-stage-${stamp}`}});
  const stageId=requireIsolatedDatabase(preflight.databaseId,database);
  const migrations=(await fs.readdir('drizzle')).filter(p=>p.endsWith('.sql')).sort();
- for(const migration of migrations) {
+ for(const migration of migrated?[]:migrations) {
   const statements=(await fs.readFile(path.join('drizzle',migration),'utf8')).split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean);
   for(const sql of statements)await api(`d1/database/${stageId}/query`,{method:'POST',label:'staging schema migration',body:{sql}});
  }

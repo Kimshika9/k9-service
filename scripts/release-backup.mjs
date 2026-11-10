@@ -46,7 +46,12 @@ try {
   }
   backup??=await api('d1/database',{method:'POST',label:'isolated backup creation',body:{name:`k9-service-backup-${stamp}`}});
   const backupId=requireIsolatedDatabase(preflight.databaseId,backup);
-  if(importRequired)await importIsolatedDatabase(api,preflight.databaseId,backup,await fs.readFile(original));
+  if(importRequired){
+   const importFile=path.join(privateDirectory,'importable.sql');
+   const preparation=await command('python3',['scripts/release-chunk-export.py',original,importFile],'Private receipt export preparation');
+   console.log(JSON.stringify(JSON.parse(preparation.stdout)));
+   await importIsolatedDatabase(api,preflight.databaseId,backup,await fs.readFile(importFile));
+  }
   const restoredExport=await exportDatabase(api,backupId);
   const restored=path.join(privateDirectory,'restored.sql');
   await download(restoredExport.url,restored);

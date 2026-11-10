@@ -58,6 +58,7 @@ jobs:
           python3 scripts/test_local_hosting.py
           python3 scripts/test_emoji_manager.py
           python3 scripts/test_widget_migration.py
+          python3 scripts/test-release-backup.py
       - run: pnpm build
       - run: pnpm test:api
       - name: Export production D1 and verify a private restored backup
