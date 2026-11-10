@@ -1,16 +1,6 @@
-# K9 Service Center · local upgrade results
+# K9 Service Center · implementation history
 
-10 November 2026 (Asia/Yangon). Local branch: `upgrade/telegram-10-4`.
-Baseline: `984d06b565f1079d006614d32f330b304567ecd0`. Remote main was checked
-again after implementation and still points to this baseline. No push, staging
-deployment or production deployment was performed.
-
-**Repository audit and local implementation/testing are complete. Live
-production readiness is not certified.** Widgets are disabled by default.
-
-Companion documents: `docs/telegram-10.4-audit.md` contains baseline evidence,
-minimum changes, compatibility decisions and regression risks;
-`docs/telegram-10.4-rollout.md` contains staging, backup and rollback procedures.
+This file records the local implementation and test results **before live deployment**. Its per-phase local status notes are historical. The API 10.4 release is now deployed and Widgets are active; see [current deployment evidence](telegram-10.4-deployment.md) and the updated [rollout/rollback runbook](telegram-10.4-rollout.md).
 
 ## Phase 1 · audit
 
