@@ -36,3 +36,39 @@ jobs:
           path: ${{ runner.temp }}/k9-release-report/preflight.json
           retention-days: 7
           if-no-files-found: error
+  verify-and-backup:
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/test-release-cloudflare.mjs
+      - run: pnpm test
+      - run: pnpm typecheck
+      - name: Python regression tests
+        run: |
+          python3 scripts/test_bot.py
+          python3 scripts/test_hosting.py
+          python3 scripts/test_local_hosting.py
+          python3 scripts/test_emoji_manager.py
+          python3 scripts/test_widget_migration.py
+      - run: pnpm build
+      - run: pnpm test:api
+      - name: Export production D1 and verify a private restored backup
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          K9_RELEASE_REPORT_DIR: ${{ runner.temp }}/k9-release-report
+        run: node scripts/release-backup.mjs
+      - name: Preserve safe backup metadata only
+        uses: actions/upload-artifact@v4
+        with:
+          name: k9-release-backup-metadata
+          path: ${{ runner.temp }}/k9-release-report/backup.json
+          retention-days: 7
+          if-no-files-found: error

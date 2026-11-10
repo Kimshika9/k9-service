@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {cloudflare,exportDatabase,requireIsolatedDatabase} from './release-cloudflare.mjs';
+const credentials={token:'private-synthetic-token',accountId:'1'.repeat(32)};
+const id='00000000-0000-4000-8000-000000000001';
+assert.throws(()=>requireIsolatedDatabase(id,{uuid:id,name:'k9-service-backup-20261110'}),/Refusing/);
+assert.throws(()=>requireIsolatedDatabase(id,{uuid:id.replace(/1$/,'2'),name:'other-project'}),/Refusing/);
+assert.equal(requireIsolatedDatabase(id,{uuid:id.replace(/1$/,'2'),name:'k9-service-stage-20261110'}),id.replace(/1$/,'2'));
+await assert.rejects(()=>cloudflare({...credentials,request:async()=>Response.json({success:false,errors:[{code:10000,message:credentials.token}]},{status:403})})('route'),error=>error.message.includes('403')&&!error.message.includes(credentials.token));
+const calls=[];
+const result=await exportDatabase(async(route,options)=>{calls.push({route,...options});return calls.length===1?{at_bookmark:'bookmark'}:{status:'complete',at_bookmark:'bookmark',result:{signed_url:'https://example.invalid/private?signature=hidden'}};},id,{wait:async()=>{}});
+assert.equal(result.bookmark,'bookmark');assert.equal(calls[1].body.current_bookmark,'bookmark');
+assert.ok(calls.every(c=>c.method==='POST'&&c.route===`d1/database/${id}/export`));
+await assert.rejects(()=>exportDatabase(async()=>({status:'error',error:credentials.token}),id),error=>!error.message.includes(credentials.token));
+await assert.rejects(()=>exportDatabase(async()=>({status:'complete',result:{signed_url:'http://insecure.invalid'}}),id),/valid download/);
+console.log('Release isolation, Cloudflare error redaction and private export polling passed.');
