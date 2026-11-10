@@ -84,6 +84,7 @@ jobs:
           K9_RELEASE_PRODUCTION: '1'
         run: node scripts/release-production.mjs
       - name: Preserve safe backup metadata only
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: k9-release-backup-metadata
@@ -92,4 +93,4 @@ jobs:
             ${{ runner.temp }}/k9-release-report/staging.json
             ${{ runner.temp }}/k9-release-report/deployment.json
           retention-days: 7
-          if-no-files-found: error
+          if-no-files-found: warn

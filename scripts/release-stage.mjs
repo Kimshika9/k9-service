@@ -48,7 +48,7 @@ try {
  const state={v:1,r:1,name:'K9 Service Center',description:'Private staging verification',price:'—'};
  const widget={html:widgetTemplate('service','en'),caption:widgetCaption('service',state,'en'),chat_data:JSON.stringify(state)};
  const form=new FormData();
- form.set('metadata',JSON.stringify({main_module:'release-stage.js',compatibility_date:'2026-05-15',compatibility_flags:['nodejs_compat'],bindings,keep_bindings:['secret_text','secret_key']}));
+ form.set('metadata',JSON.stringify({main_module:'release-stage.js',compatibility_date:'2026-05-15',compatibility_flags:['nodejs_compat','global_fetch_strictly_public'],bindings,keep_bindings:['secret_text','secret_key']}));
  form.set('release-stage.js',new Blob([`import app from './index.js';\nconst create=${previewHandler.toString()};\nexport default create(app,${JSON.stringify(widget)});`],{type:'application/javascript+module'}),'release-stage.js');
  const root=path.resolve('dist/server');
  for(const file of (await fs.readdir(root,{recursive:true})).filter(p=>/\.m?js$/.test(p)))

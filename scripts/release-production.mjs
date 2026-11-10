@@ -29,9 +29,15 @@ try {
  async function previewCheck(route) {
   let response,data;try{response=await fetch(preview.host+route,{method:'POST',headers:{Authorization:`Bearer ${preview.key}`,'cf-workers-preview-token':preview.token},signal:AbortSignal.timeout(90000)});data=await response.json();}
   catch{throw new Error('Private live verification could not be reached.');}
-  if(!response.ok)throw new Error(`Private live verification returned HTTP ${response.status}.`);
+  if(!response.ok){
+   const detail=typeof data.error==='string'&&/^Telegram \w+ failed with code \d+\.$/.test(data.error)?' '+data.error:'';
+   throw new Error(`Private live verification ${route} returned HTTP ${response.status}.${detail}`);
+  }
   return data;
  }
+ const baseline=await previewCheck('/verify-live');
+ console.log(JSON.stringify({stage:'live-baseline',checks:baseline}));
+ if(baseline.rootStatus!==200||baseline.healthStatus!==200||baseline.ownerStatus!==200)throw new Error('Existing production readiness must be reviewed before another deployment.');
  const settings=await api('workers/scripts/k9-service/settings',{label:'binding preservation inspection'});
  const configPath='dist/server/wrangler.json',config=JSON.parse(await fs.readFile(configPath,'utf8'));
  config.account_id=credentials.accountId;config.keep_vars=true;
@@ -74,7 +80,7 @@ try {
  const after=await inspectRelease(credentials);
  if(after.productionVersions.length!==1||after.productionVersions[0].id!==uploaded||after.productionVersions[0].percentage!==100)throw new Error('The new Worker is not serving 100% of production traffic.');
  report={stage:'production-compatibility-deployed',commit:process.env.GITHUB_SHA,worker:'k9-service',versionId:uploaded,rollbackVersionId:rollback,databaseId:current.databaseId,
-  backupDatabaseName:backup.backupDatabaseName,migrationsApplied:pending,connection,observations,widgetsEnabled:false,widgetActivation:'pending real-client visual acceptance',hostingRuntimeChanged:false};
+  backupDatabaseName:backup.backupDatabaseName,migrationsApplied:pending,connection,observations,widgetsEnabled:false,widgetActivation:'pending real-client visual acceptance',hostingRuntimeChanged:false,bindingsPreserved:settings.bindings.map(b=>({name:b.name,type:b.type}))};
  await fs.writeFile(path.join(directory,'deployment.json'),JSON.stringify(report,null,2)+'\n',{mode:0o600});
  console.log(JSON.stringify(report,null,2));
 }catch(error){
