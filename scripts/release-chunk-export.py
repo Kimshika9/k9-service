@@ -119,6 +119,35 @@ def chunk_export(source, destination):
             return bool(re.match(r'(INSERT|UPDATE|DELETE)\b', cleaned, re.I))
         schema = [part for part in parts if not is_data(part)]
         data = [part for part in parts if is_data(part)]
+        # Each import batch must satisfy foreign keys independently.
+        tables = [row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+        ordered, visiting = [], set()
+
+        def visit(table):
+            if table in ordered:
+                return
+            if table in visiting:
+                raise ValueError("K9_BACKUP_FOREIGN_KEY_CYCLE")
+            visiting.add(table)
+            for reference in db.execute("PRAGMA foreign_key_list(" + identifier(table) + ")"):
+                if reference[2] != table:
+                    visit(reference[2])
+            visiting.remove(table)
+            ordered.append(table)
+
+        for table in tables:
+            visit(table)
+
+        def priority(statement):
+            cleaned = re.sub(r'\A(?:\s|--[^\n]*(?:\n|$)|/\*.*?\*/)*', '', statement, flags=re.S)
+            match = re.match(r'(?:INSERT INTO|DELETE FROM|UPDATE)\s+(?:"((?:[^"]|"")+)"|`([^`]+)`|\[([^\]]+)\]|([A-Za-z_][A-Za-z0-9_]*))', cleaned, re.I)
+            if not match:
+                raise ValueError("K9_BACKUP_DATA_FORMAT")
+            table = next(value for value in match.groups() if value).replace('""', '"')
+            return len(ordered) if table == "sqlite_sequence" else ordered.index(table)
+
+        data.sort(key=priority)
+        violations = len(db.execute("PRAGMA foreign_key_check").fetchall())
         with open(destination, "w", encoding="utf-8") as output:
             output.write("PRAGMA defer_foreign_keys=ON;\n")
             for statement in schema + data:
@@ -134,7 +163,7 @@ def chunk_export(source, destination):
                     output.write(part + "\n")
         if verify.snapshot(source) != verify.snapshot(destination):
             raise ValueError("K9_BACKUP_DATA_MISMATCH")
-        return {"largeStatementsSplit": transformed, "maximumStatementBytes": largest, "dataPreserved": True}
+        return {"largeStatementsSplit": transformed, "maximumStatementBytes": largest, "dataPreserved": True, "sourceForeignKeyViolations": violations}
     finally:
         db.close()
 

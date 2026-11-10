@@ -45,10 +45,18 @@ class ReceiptBackupTests(unittest.TestCase):
             chunk.chunk_export(source, target)
             sql = target.read_text()
             self.assertLess(sql.index('CREATE TABLE parent'), sql.index('INSERT INTO child'))
+            self.assertLess(sql.index('INSERT INTO parent'), sql.index('INSERT INTO child'))
             db = sqlite3.connect(":memory:")
             self.addCleanup(db.close)
             db.executescript(sql)
             self.assertEqual(db.execute('PRAGMA foreign_key_check').fetchall(), [])
+            strict = sqlite3.connect(":memory:")
+            self.addCleanup(strict.close)
+            strict.execute('PRAGMA foreign_keys=ON')
+            for statement in chunk.statements(sql):
+                strict.execute(statement)
+                strict.commit()
+            self.assertEqual(strict.execute('PRAGMA foreign_key_check').fetchall(), [])
 
 
 if __name__ == "__main__":
