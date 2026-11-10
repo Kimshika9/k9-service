@@ -50,7 +50,13 @@ export async function importIsolatedDatabase(api,production,database,bytes,{requ
   result=await api(`d1/database/${id}/import`,{method:'POST',label:'private backup ingestion',body:{action:'ingest',etag,filename:result.filename}});
  }
  for(let attempt=0;attempt<90;attempt++) {
-  if(result.success===false||result.status==='error')throw new Error('Private backup ingestion failed; SQL and provider details withheld.');
+  if(result.success===false||result.status==='error') {
+   const detail=String(result.error??'')+' '+(result.messages??[]).join(' ');
+   const classifications=[[/foreign key constraint/i,'foreign-key constraint'],[/not authorized|authorization|permission|forbidden/i,'authorization'],[/no such table/i,'schema dependency'],[/too (?:long|big|large)|SQLITE_TOOBIG|statement.*limit/i,'statement-size limit'],[/already exists|not empty/i,'duplicate schema'],[/syntax error/i,'SQL syntax'],[/transaction/i,'transaction handling'],[/internal error/i,'provider internal error']];
+   const reason=classifications.find(([pattern])=>pattern.test(detail))?.[1]??'unclassified provider error';
+   const codes=[...detail.matchAll(/\b(?:SQLITE_[A-Z_]+|[0-9]{4,5})\b/g)].map(m=>m[0]).filter(s=>s.startsWith('SQLITE_'));
+   throw new Error(`Private backup ingestion failed (${reason}${codes.length?'; '+[...new Set(codes)].join(','):''}); SQL and row values withheld.`);
+  }
   if(result.status==='complete')return;
   if(!result.at_bookmark)throw new Error('Private backup import returned no polling bookmark.');
   await wait(1000);
