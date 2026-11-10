@@ -38,6 +38,18 @@ class ReceiptBackupTests(unittest.TestCase):
         statements = list(chunk.statements("-- ignored;\nCREATE TABLE x(v); INSERT INTO x VALUES('a;''b'); /* ; */ SELECT 1;"))
         self.assertEqual(len(statements), 3)
 
+    def test_referenced_schema_exists_before_child_rows(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source, target = Path(directory) / "source.sql", Path(directory) / "target.sql"
+            source.write_text("PRAGMA defer_foreign_keys=ON;\nCREATE TABLE child(id INTEGER PRIMARY KEY,parent_id INTEGER REFERENCES parent(id));\nINSERT INTO child VALUES(1,7);\nCREATE TABLE parent(id INTEGER PRIMARY KEY);\nINSERT INTO parent VALUES(7);\n")
+            chunk.chunk_export(source, target)
+            sql = target.read_text()
+            self.assertLess(sql.index('CREATE TABLE parent'), sql.index('INSERT INTO child'))
+            db = sqlite3.connect(":memory:")
+            self.addCleanup(db.close)
+            db.executescript(sql)
+            self.assertEqual(db.execute('PRAGMA foreign_key_check').fetchall(), [])
+
 
 if __name__ == "__main__":
     unittest.main()

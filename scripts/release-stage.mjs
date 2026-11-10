@@ -38,8 +38,8 @@ try {
  let sessionToken=session.token;
  if(session.exchange_url) {
   let exchange;try{exchange=await fetch(session.exchange_url,{signal:AbortSignal.timeout(20000)});}catch{throw new Error('Private edge-preview session exchange failed.');}
-  if(!exchange.ok)throw new Error(`Private edge-preview exchange returned HTTP ${exchange.status}.`);
-  const expanded=await exchange.json();sessionToken=expanded.token??sessionToken;
+  // Match Wrangler: an unexpandable exchange falls back to the native token.
+  if(exchange.ok){const expanded=await exchange.json();sessionToken=expanded.token??sessionToken;}
  }
  if(typeof sessionToken!=='string')throw new Error('No private edge-preview session token was returned.');
  const key=randomBytes(32).toString('hex');

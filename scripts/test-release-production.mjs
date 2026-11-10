@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {assertProductionGate,preservedBindings,liveHealthy} from './release-production-policy.mjs';
+const versions=[{id:'version-before',percentage:100}],current={databaseId:'same-database',productionVersions:versions};
+const backup={restoreVerified:true,...current},staging={checks:{healthStatus:200},widgetChecks:{privateOwnerWidgetSent:true,widgetEditVerified:true}};
+assertProductionGate(backup,staging,current);
+for(const bad of [{...backup,restoreVerified:false},{...backup,databaseId:'other'},{...backup,productionVersions:[{id:'concurrent-deployment',percentage:100}]}])assert.throws(()=>assertProductionGate(bad,staging,current),/gate/);
+const settings={bindings:[{name:'DB',type:'d1',id:current.databaseId},{name:'BOT_TOKEN',type:'secret_text'},{name:'OWNER_TELEGRAM_ID',type:'secret_text'},{name:'PRIVATE_STORAGE',type:'r2_bucket',bucket_name:'existing-private-bucket'},{name:'ASSETS',type:'assets'},{name:'SETTING',type:'plain_text',text:'private-value'}]};
+const bindings=preservedBindings(settings,current.databaseId);
+assert.equal(bindings.find(b=>b.name==='PRIVATE_STORAGE').type,'inherit');
+assert.equal(bindings.find(b=>b.name==='BOT_TOKEN').type,'inherit');
+assert.equal(bindings.find(b=>b.name==='K9_WIDGETS_ENABLED').text,'0');
+assert.doesNotMatch(JSON.stringify(bindings),/private-value/);
+assert.throws(()=>preservedBindings(settings,'wrong-database'),/DB binding/);
+const checks={rootStatus:200,assetStatus:200,healthStatus:200,health:{ready:true},ownerStatus:200,unauthorizedStatus:401,wrongSecretStatus:401,authenticatedMalformedStatus:200,hostingStatus:200,webhookUrlMatches:true,subscriptionsReady:true};
+assert.equal(liveHealthy(checks),true);
+for(const bad of [{...checks,assetStatus:404},{...checks,health:{ready:false}},{...checks,ownerStatus:401},{...checks,unauthorizedStatus:200},{...checks,hostingStatus:503},{...checks,subscriptionsReady:false}])assert.equal(liveHealthy(bad),false);
+console.log('Production gates: backup/staging/rollback identity, resource inheritance, dormant Widget flag, auth/assets/hosting/webhook regression checks passed.');

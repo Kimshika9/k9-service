@@ -111,8 +111,17 @@ def chunk_export(source, destination):
     transformed, largest = 0, 0
     try:
         db.executescript(original)
+        parts = list(statements(original))
+        # D1 requires referenced tables to exist even with deferred foreign keys.
+        # Native dumps may interleave CREATE child / INSERT child / CREATE parent.
+        def is_data(statement):
+            cleaned = re.sub(r'\A(?:\s|--[^\n]*(?:\n|$)|/\*.*?\*/)*', '', statement, flags=re.S)
+            return bool(re.match(r'(INSERT|UPDATE|DELETE)\b', cleaned, re.I))
+        schema = [part for part in parts if not is_data(part)]
+        data = [part for part in parts if is_data(part)]
         with open(destination, "w", encoding="utf-8") as output:
-            for statement in statements(original):
+            output.write("PRAGMA defer_foreign_keys=ON;\n")
+            for statement in schema + data:
                 replacement = [statement]
                 if len(statement.encode()) > LIMIT:
                     replacement = list(split_insert(db, statement))

@@ -49,6 +49,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: node scripts/test-release-cloudflare.mjs
       - run: node --experimental-strip-types scripts/test-release-preview.mjs
+      - run: node scripts/test-release-production.mjs
       - run: pnpm test
       - run: pnpm typecheck
       - name: Python regression tests

@@ -72,7 +72,7 @@ export function previewHandler(app,widget) {
      const hosting=await live('/api/hosting/queue',{method:'POST',headers:{'Content-Type':'application/json','x-k9-hosting-secret':env.K9_HOSTING_SECRET??''},body:JSON.stringify({op:'check',ownerId:env.OWNER_TELEGRAM_ID})});
      const info=await telegram('getWebhookInfo',{});
      return Response.json({rootStatus:root.status,assetStatus,healthStatus:health.status,health:await health.json(),ownerStatus:owner.status,unauthorizedStatus:unauthorized.status,wrongSecretStatus:wrong.status,authenticatedMalformedStatus:authenticatedMalformed.status,hostingStatus:hosting.status,
-      webhookUrlMatches:info.url===site+'/api/telegram/webhook',subscriptionsReady:['message','callback_query','widget_query'].every(t=>info.allowed_updates?.includes(t)),pendingUpdates:info.pending_update_count??0,hasDeliveryError:!!info.last_error_message});
+      webhookUrlMatches:info.url===site+'/api/telegram/webhook',subscriptionsReady:['message','callback_query','widget_query'].every(t=>info.allowed_updates?.includes(t)),pendingUpdates:info.pending_update_count??0,hasDeliveryError:!!info.last_error_message,lastErrorAt:info.last_error_date??null});
     }
     return new Response(null,{status:404});
    }catch(error){return Response.json({error:error instanceof Error?error.message:'Release preview failed.'},{status:502});}
